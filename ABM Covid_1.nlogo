@@ -1,18 +1,31 @@
 extensions [gis]
 
 globals[
-  cities-dataset  ]
+  cities-dataset
+  border               ;; The patches representing the yellow border
+  ininitial-people
+  contimnet
+]
+
 patches-own [
   random-n
   centroid
   ID
 ]
+
+turtles-own
+[
+
+]
+
 to setup
   clear-all
   ; Note that setting the coordinate system here is optional, as
   ; long as all of your datasets use the same coordinate system.
 
   ; Load all of our datasets
+
+
   set cities-dataset gis:load-dataset "data/Local_Authority_Districts__December_2019__Boundaries_UK_BFE.shp"
   gis:set-world-envelope (gis:envelope-of cities-dataset)
   let i 1
@@ -27,8 +40,13 @@ to setup
   ]
   gis:set-drawing-color white
   gis:draw cities-dataset 1
+
   reset-ticks
+
 end
+
+
+
 
 to color-change
   ask patches with [ID > 0] [
@@ -39,22 +57,47 @@ to color-change
     ]
     [
       gis:set-drawing-color blue
+
     ]
     gis:fill item (ID - 1)
     gis:feature-list-of cities-dataset 2.0
   ]
+  let i 1
+  foreach gis:feature-list-of cities-dataset [ feature ->
+    ask patches gis:intersecting feature [
+     set centroid gis:location-of gis:centroid-of feature
+      ask patch item 0 centroid item 1 centroid [
+      set ID i
+     ]
+    ]
+   set i i + 1
+  ]
+  ask patches with [ID = 1] [set contimnet 1]
+  ask n-of populationsofSTA patches with [contimnet = 1 and centroid = [-43.888260987840745 -2.698801389489825]] [sprout 1 [set color white set shape "box"]]
+  ask n-of populationofWandH patches with [contimnet = 1 and centroid = [41.41899213807637 -5.461609758291327]] [sprout 1 [set color yellow set shape "person"]]
+
 end
 
+to go
+  reset-ticks
+  ask turtles with [shape = "person" ] [ forward 1 ]
+  ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid = [-43.888260987840745 -2.698801389489825]  [ forward 1]]
+  ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
 
+
+
+  tick
+  wait .1
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
 10
-855
-656
+620
+421
 -1
 -1
-13.0
+2.0
 1
 10
 1
@@ -64,10 +107,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--24
-24
--24
-24
+-100
+100
+-100
+100
 0
 0
 1
@@ -75,10 +118,10 @@ ticks
 30.0
 
 BUTTON
-94
-119
-157
-152
+14
+126
+77
+159
 NIL
 setup\n
 NIL
@@ -92,13 +135,60 @@ NIL
 1
 
 BUTTON
-37
-276
-140
-309
+16
+85
+119
+118
 NIL
 color-change\n
 NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+16
+42
+188
+75
+populationsofSTA
+populationsofSTA
+100
+1500
+100.0
+1000
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+190
+190
+223
+populationofWandH
+populationofWandH
+100
+1500
+100.0
+1000
+1
+NIL
+HORIZONTAL
+
+BUTTON
+735
+67
+799
+101
+Go
+go\n
+T
 1
 T
 OBSERVER
