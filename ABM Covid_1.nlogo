@@ -79,16 +79,13 @@ to color-change
 end
 
 to go
-  reset-ticks
   ask turtles with [shape = "person" ] [ forward 1 ]
-  ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid = [-43.888260987840745 -2.698801389489825]  [ forward 1]]
-  ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
-
-
-
+  ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "person" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
   tick
-  wait .1
+
 end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -111,8 +108,8 @@ GRAPHICS-WINDOW
 100
 -100
 100
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -197,6 +194,17 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+25
+254
+138
+287
+stayLocal?
+stayLocal?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
