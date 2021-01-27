@@ -82,10 +82,12 @@ to go
   ask turtles with [shape = "person" ] [ forward 1 ]
   ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
   ask turtles with [shape = "person" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
+  ask turtles with [shape = "box" ] [ forward 1 ]
+  ask turtles with [shape = "box" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "box" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
   tick
 
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -157,7 +159,7 @@ populationsofSTA
 populationsofSTA
 100
 1500
-100.0
+1100.0
 1000
 1
 NIL
@@ -172,7 +174,7 @@ populationofWandH
 populationofWandH
 100
 1500
-100.0
+1100.0
 1000
 1
 NIL
