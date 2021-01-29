@@ -2,9 +2,6 @@ extensions [gis]
 
 globals[
   cities-dataset
-  border               ;; The patches representing the yellow border
-  ininitial-people
-  contimnet
 ]
 
 patches-own [
@@ -18,19 +15,18 @@ turtles-own
 
 ]
 
-to setup
+to setup_map
   clear-all
-  ; Note that setting the coordinate system here is optional, as
-  ; long as all of your datasets use the same coordinate system.
 
   ; Load all of our datasets
 
 
   set cities-dataset gis:load-dataset "data/Local_Authority_Districts__December_2019__Boundaries_UK_BFE.shp"
   gis:set-world-envelope (gis:envelope-of cities-dataset)
+  ;;associate patches to local centroids
   let i 1
-  foreach gis:feature-list-of cities-dataset [ feature ->
-    ask patches gis:intersecting feature [
+  foreach gis:feature-list-of cities-dataset [ feature -> ;the feature list is the collection of all the polygons that make up the map and passed to the anonymous procedure inside the loop,
+    ask patches gis:intersecting feature [ ;the patches intersecting the current feature in the list to overlay
      set centroid gis:location-of gis:centroid-of feature
       ask patch item 0 centroid item 1 centroid [
       set ID i
@@ -41,14 +37,14 @@ to setup
   gis:set-drawing-color white
   gis:draw cities-dataset 1
 
-  reset-ticks
+
 
 end
 
 
 
 
-to color-change
+to setup
   ask patches with [ID > 0] [
     set random-n random-float 10
     ifelse random-n >= 5
@@ -60,31 +56,22 @@ to color-change
 
     ]
     gis:fill item (ID - 1)
-    gis:feature-list-of cities-dataset 2.0
+    gis:feature-list-of cities-dataset 2.0 ;thickness
   ]
-  let i 1
-  foreach gis:feature-list-of cities-dataset [ feature ->
-    ask patches gis:intersecting feature [
-     set centroid gis:location-of gis:centroid-of feature
-      ask patch item 0 centroid item 1 centroid [
-      set ID i
-     ]
-    ]
-   set i i + 1
-  ]
-  ask patches with [ID = 1] [set contimnet 1]
-  ask n-of populationsofSTA patches with [contimnet = 1 and centroid = [-43.888260987840745 -2.698801389489825]] [sprout 1 [set color white set shape "box"]]
-  ask n-of populationofWandH patches with [contimnet = 1 and centroid = [41.41899213807637 -5.461609758291327]] [sprout 1 [set color yellow set shape "person"]]
+
+  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [sprout 1 [set color black set shape "person student"]]
+  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [sprout 1 [set color yellow set shape "person"]]
+  reset-ticks
 
 end
 
 to go
-  ask turtles with [shape = "person" ] [ forward 1 ]
+  ask turtles with [shape = "person" ] [ forward 0.5 ]
   ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
   ask turtles with [shape = "person" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
-  ask turtles with [shape = "box" ] [ forward 1 ]
-  ask turtles with [shape = "box" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "box" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
+  ask turtles with [shape = "person student" ] [ forward 0.5 ]
+  ask turtles with [shape = "person student" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "person student" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
   tick
 
 end
@@ -115,40 +102,6 @@ GRAPHICS-WINDOW
 1
 ticks
 30.0
-
-BUTTON
-14
-126
-77
-159
-NIL
-setup\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-16
-85
-119
-118
-NIL
-color-change\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
 
 SLIDER
 16
@@ -181,10 +134,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-735
-67
-799
-101
+124
+89
+188
+123
 Go
 go\n
 T
@@ -207,6 +160,40 @@ stayLocal?
 0
 1
 -1000
+
+BUTTON
+20
+89
+113
+122
+NIL
+setup_map\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+21
+130
+84
+163
+NIL
+setup\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -424,6 +411,41 @@ Polygon -7500403 true true 105 90 120 195 90 285 105 300 135 300 150 225 165 300
 Rectangle -7500403 true true 127 79 172 94
 Polygon -7500403 true true 195 90 240 150 225 180 165 105
 Polygon -7500403 true true 105 90 60 150 75 180 135 105
+
+person service
+false
+0
+Polygon -7500403 true true 180 195 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285
+Polygon -1 true false 120 90 105 90 60 195 90 210 120 150 120 195 180 195 180 150 210 210 240 195 195 90 180 90 165 105 150 165 135 105 120 90
+Polygon -1 true false 123 90 149 141 177 90
+Rectangle -7500403 true true 123 76 176 92
+Circle -7500403 true true 110 5 80
+Line -13345367 false 121 90 194 90
+Line -16777216 false 148 143 150 196
+Rectangle -16777216 true false 116 186 182 198
+Circle -1 true false 152 143 9
+Circle -1 true false 152 166 9
+Rectangle -16777216 true false 179 164 183 186
+Polygon -2674135 true false 180 90 195 90 183 160 180 195 150 195 150 135 180 90
+Polygon -2674135 true false 120 90 105 90 114 161 120 195 150 195 150 135 120 90
+Polygon -2674135 true false 155 91 128 77 128 101
+Rectangle -16777216 true false 118 129 141 140
+Polygon -2674135 true false 145 91 172 77 172 101
+
+person student
+false
+0
+Polygon -13791810 true false 135 90 150 105 135 165 150 180 165 165 150 105 165 90
+Polygon -7500403 true true 195 90 240 195 210 210 165 105
+Circle -7500403 true true 110 5 80
+Rectangle -7500403 true true 127 79 172 94
+Polygon -7500403 true true 105 90 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285 180 195 195 90
+Polygon -1 true false 100 210 130 225 145 165 85 135 63 189
+Polygon -13791810 true false 90 210 120 225 135 165 67 130 53 189
+Polygon -1 true false 120 224 131 225 124 210
+Line -16777216 false 139 168 126 225
+Line -16777216 false 140 167 76 136
+Polygon -7500403 true true 105 90 60 195 90 210 135 105
 
 plant
 false
