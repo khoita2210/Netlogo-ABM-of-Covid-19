@@ -1,17 +1,20 @@
-extensions [gis]
+extensions [gis]       ;this creates a gis extension
 
 globals[
-  cities-dataset
+  cities-dataset       ;this creates a global varibal to store the gis dataset (shp) file
+  %infected            ; this creates a global variable to hold what % of the population is infectious
+  nb-infected
 ]
 
 patches-own [
-  random-n
-  centroid
-  ID
+  random-n             ;create a new random number to use
+  centroid             ;create a new variable name centroid to hold the contains of each location
+  ID                   ;create the ID for centroid patchs
 ]
 
 turtles-own
 [
+  infected?            ; this creates a variable for the turles if true, the turtle is infectious
 
 ]
 
@@ -22,11 +25,10 @@ to setup_map
 
 
   set cities-dataset gis:load-dataset "data/Local_Authority_Districts__December_2019__Boundaries_UK_BFE.shp"
-  gis:set-world-envelope (gis:envelope-of cities-dataset)
-  ;;associate patches to local centroids
+  gis:set-world-envelope (gis:envelope-of cities-dataset)                                                       ;associate patches to local centroids
   let i 1
-  foreach gis:feature-list-of cities-dataset [ feature -> ;the feature list is the collection of all the polygons that make up the map and passed to the anonymous procedure inside the loop,
-    ask patches gis:intersecting feature [ ;the patches intersecting the current feature in the list to overlay
+  foreach gis:feature-list-of cities-dataset [ feature ->                                                       ;the feature list is the collection of all the polygons that make up the map and passed to the anonymous procedure inside the loop,
+    ask patches gis:intersecting feature [                                                                      ;the patches intersecting the current feature in the list to overlay
      set centroid gis:location-of gis:centroid-of feature
       ask patch item 0 centroid item 1 centroid [
       set ID i
@@ -34,8 +36,8 @@ to setup_map
     ]
    set i i + 1
   ]
-  gis:set-drawing-color white
-  gis:draw cities-dataset 1
+  gis:set-drawing-color black
+  gis:draw cities-dataset 2
 
 
 
@@ -49,31 +51,62 @@ to setup
     set random-n random-float 10
     ifelse random-n >= 5
     [
-      gis:set-drawing-color red
+      gis:set-drawing-color green
     ]
     [
-      gis:set-drawing-color blue
+      gis:set-drawing-color green
 
     ]
     gis:fill item (ID - 1)
     gis:feature-list-of cities-dataset 2.0 ;thickness
   ]
 
-  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [sprout 1 [set color black set shape "person student"]]
-  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [sprout 1 [set color yellow set shape "person"]]
+  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [sprout 1 [set color white set shape "circle"]]
+  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [sprout 1 [set color white set shape "x"]]
+  ask n-of infect turtles
+    [ get-infected]
   reset-ticks
 
 end
 
 to go
-  ask turtles with [shape = "person" ] [ forward 0.5 ]
-  ask turtles with [shape = "person" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "person" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
-  ask turtles with [shape = "person student" ] [ forward 0.5 ]
-  ask turtles with [shape = "person student" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "person student" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
+  ask turtles with [shape = "x" ] [ forward 0.25 ]
+  ask turtles with [shape = "x" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "x" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
+  ask turtles with [shape = "circle" ] [ forward 0.25]
+  ask turtles with [shape = "circle" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "circle" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
+
+  set nb-infected count turtles with [infected? = true]
+  ask turtles [
+    if infected? = true [tranmiss]]
+  update-display
+  update-global-variables
+  show count turtles
   tick
 
+end
+
+to get-infected                                     ;this creates a function to set infected turtles
+  set infected?  TRUE
+end
+
+
+to update-display                                   ;this creates a fuction to set colour of turtles
+  ask turtles
+    [ if infected? = true [set color red]  ]        ;if infected change the colour of turtles to red
+end
+
+to update-global-variables                          ;this to update the new number of infections and recovery
+  if count turtles > 0                              ;if number of turtles greater than 0
+    [ set %infected (nb-infected / count turtles) * 100]   ;this to get the percentage of number of infection by (number of infections/number of turtles)x100
+end
+
+to tranmiss  ;; turtle procedure
+
+ ask other turtles-here with [ infected? != true ]
+    [ if random-float 100 < infection-chance
+      [ get-infected ] ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -157,7 +190,7 @@ SWITCH
 287
 stayLocal?
 stayLocal?
-0
+1
 1
 -1000
 
@@ -194,6 +227,65 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+20
+295
+193
+328
+infect
+infect
+0
+1000
+1.0
+10
+1
+NIL
+HORIZONTAL
+
+MONITOR
+665
+43
+737
+88
+NIL
+%infected
+1
+1
+11
+
+PLOT
+707
+182
+907
+332
+plot 1
+NIL
+NIL
+0.0
+100.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count turtles with [infected? = true]"
+
+SLIDER
+24
+352
+197
+386
+infection-chance
+infection-chance
+5
+100
+5.0
+10
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
