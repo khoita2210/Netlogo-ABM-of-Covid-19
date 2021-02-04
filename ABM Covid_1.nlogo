@@ -1,9 +1,11 @@
 extensions [gis]       ;this creates a gis extension
 
 globals[
-  cities-dataset       ;this creates a global varibal to store the gis dataset (shp) file
+  cities-dataset       ; this creates a global varibal to store the gis dataset (shp) file
   %infected            ; this creates a global variable to hold what % of the population is infectious
-  nb-infected
+  nb-infected          ; this to hold a global variable to hold the number of infection
+  %antibodies          ; this creates a global variable to hold what % of the population have antibody with the virus
+
 ]
 
 patches-own [
@@ -15,11 +17,13 @@ patches-own [
 turtles-own
 [
   infected?            ; this creates a variable for the turles if true, the turtle is infectious
+  infect-time          ; this creates a variable for turtles to hold the length of infection
+  antibodies           ; this creates a variable for turtles to know if a turtle have antibody
 
 ]
 
 to setup_map
-  clear-all
+  clear-all            ;
 
   ; Load all of our datasets
 
@@ -36,7 +40,7 @@ to setup_map
     ]
    set i i + 1
   ]
-  gis:set-drawing-color black
+  gis:set-drawing-color white
   gis:draw cities-dataset 2
 
 
@@ -51,7 +55,7 @@ to setup
     set random-n random-float 10
     ifelse random-n >= 5
     [
-      gis:set-drawing-color green
+      gis:set-drawing-color blue
     ]
     [
       gis:set-drawing-color green
@@ -61,25 +65,31 @@ to setup
     gis:feature-list-of cities-dataset 2.0 ;thickness
   ]
 
-  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [sprout 1 [set color white set shape "circle"]]
-  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [sprout 1 [set color white set shape "x"]]
+  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [
+    sprout 1 [
+      set color white set shape "circle"
+      healthy ]
+  ]
+  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [
+    sprout 1 [
+      set color white set shape "x"
+      healthy ]
+  ]
   ask n-of infect turtles
-    [ get-infected]
+    [ get-infected ]
   reset-ticks
 
 end
 
 to go
-  ask turtles with [shape = "x" ] [ forward 0.25 ]
-  ask turtles with [shape = "x" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "x" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
-  ask turtles with [shape = "circle" ] [ forward 0.25]
-  ask turtles with [shape = "circle" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "circle" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
 
+  move
   set nb-infected count turtles with [infected? = true]
   ask turtles [
-    if infected? = true [tranmiss]]
+    decrease
+    if infected? != true [tranmiss]
+    if infected? = true [recover-or-die]
+  ]
   update-display
   update-global-variables
   show count turtles
@@ -87,26 +97,67 @@ to go
 
 end
 
+to move
+  ask turtles with [shape = "x" ] [ forward 0.05 ]
+  ask turtles with [shape = "x" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "x" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
+  ask turtles with [shape = "circle" ] [ forward 0.05]
+  ask turtles with [shape = "circle" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
+  ask turtles with [shape = "circle" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
+end
+
 to get-infected                                     ;this creates a function to set infected turtles
-  set infected?  TRUE
+  set infected?  true
+  set antibodies 0
 end
 
 
 to update-display                                   ;this creates a fuction to set colour of turtles
   ask turtles
-    [ if infected? = true [set color red]  ]        ;if infected change the colour of turtles to red
+    [ if infected? = true [set color red]
+      if antibodies > 0 [set color black] ]        ;if infected change the colour of turtles to red
 end
 
 to update-global-variables                          ;this to update the new number of infections and recovery
   if count turtles > 0                              ;if number of turtles greater than 0
-    [ set %infected (nb-infected / count turtles) * 100]   ;this to get the percentage of number of infection by (number of infections/number of turtles)x100
+    [ set %infected (nb-infected / count turtles) * 100   ;this to get the percentage of number of infection by (number of infections/number of turtles)x100
+   set %antibodies (count turtles with [ antibodies > 0 ] / count turtles) * 100 ]
 end
 
 to tranmiss  ;; turtle procedure
 
- ask other turtles-here with [ infected? != true ]
+ ask other turtles-here with [ infected? != true  ]
     [ if random-float 100 < infection-chance
       [ get-infected ] ]
+end
+
+
+to healthy ;; turtle procedure
+  set infected? false
+  set infect-time 0
+end
+
+to develop-antibody ;; turtle procedure
+   set infected? false
+   set infect-time 0
+   set antibodies immunity-last
+end
+
+
+to decrease
+  if antibodies > 0 [ set antibodies antibodies - 1 ]
+  if infected? [ set infect-time infect-time + 1 ]
+end
+
+;to immune?
+  ;report antibodies > 0
+;end
+
+to recover-or-die ;; turtle procedure
+  if infect-time > 504                    ;; If the turtle has survived past the virus' duration, then
+    [ ifelse random-float 100 < chance-recovery   ;; either recover or die
+      [ develop-antibody ]
+      [ die ] ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -133,14 +184,14 @@ GRAPHICS-WINDOW
 1
 1
 1
-ticks
+weeks
 30.0
 
 SLIDER
-16
-42
-188
-75
+21
+20
+176
+54
 populationsofSTA
 populationsofSTA
 100
@@ -152,10 +203,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-17
-190
-190
-223
+20
+136
+180
+170
 populationofWandH
 populationofWandH
 100
@@ -167,10 +218,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-124
-89
-188
-123
+20
+98
+84
+132
 Go
 go\n
 T
@@ -184,10 +235,10 @@ NIL
 1
 
 SWITCH
-25
-254
-138
-287
+88
+99
+181
+133
 stayLocal?
 stayLocal?
 1
@@ -195,10 +246,10 @@ stayLocal?
 -1000
 
 BUTTON
-20
-89
-113
-122
+21
+60
+114
+93
 NIL
 setup_map\n
 NIL
@@ -212,10 +263,10 @@ NIL
 1
 
 BUTTON
-21
-130
-84
-163
+118
+60
+181
+93
 NIL
 setup\n
 NIL
@@ -229,25 +280,25 @@ NIL
 1
 
 SLIDER
-20
-295
-193
-328
+19
+173
+180
+207
 infect
 infect
 0
 1000
-1.0
+300.0
 10
 1
 NIL
 HORIZONTAL
 
 MONITOR
-665
-43
-737
-88
+626
+17
+698
+62
 NIL
 %infected
 1
@@ -255,10 +306,10 @@ NIL
 11
 
 PLOT
-707
-182
-907
-332
+704
+17
+864
+137
 plot 1
 NIL
 NIL
@@ -271,21 +322,63 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot count turtles with [infected? = true]"
+"pen-1" 1.0 0 -2674135 true "" "plot count turtles with [antibodies > 0 ]"
 
 SLIDER
-24
-352
-197
-386
+19
+209
+180
+243
 infection-chance
 infection-chance
 5
 100
-5.0
+75.0
 10
 1
 NIL
 HORIZONTAL
+
+SLIDER
+18
+248
+180
+282
+immunity-last
+immunity-last
+0
+10000
+5840.0
+1000
+1
+NIL
+HORIZONTAL
+
+SLIDER
+13
+286
+185
+320
+chance-recovery
+chance-recovery
+0
+100
+10.0
+10
+1
+NIL
+HORIZONTAL
+
+MONITOR
+25
+340
+107
+386
+NIL
+%antibodies
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
