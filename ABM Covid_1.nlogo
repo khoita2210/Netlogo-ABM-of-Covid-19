@@ -1,6 +1,6 @@
 extensions [gis]       ;this creates a gis extension
 
-globals[
+globals[               ; defines the global variables
   cities-dataset       ; this creates a global varibal to store the gis dataset (shp) file
   %infected            ; this creates a global variable to hold what % of the population is infectious
   nb-infected          ; this to hold a global variable to hold the number of infection
@@ -8,13 +8,13 @@ globals[
 
 ]
 
-patches-own [
+patches-own [          ;defines the variables belonging to each patch
   random-n             ;create a new random number to use
   centroid             ;create a new variable name centroid to hold the contains of each location
   ID                   ;create the ID for centroid patchs
 ]
 
-turtles-own
+turtles-own            ; defines the variables belonging to each turtle.
 [
   infected?            ; this creates a variable for the turles if true, the turtle is infectious
   infect-time          ; this creates a variable for turtles to hold the length of infection
@@ -22,26 +22,22 @@ turtles-own
 
 ]
 
-to setup_map
-  clear-all            ;
-
-  ; Load all of our datasets
-
-
-  set cities-dataset gis:load-dataset "data/Local_Authority_Districts__December_2019__Boundaries_UK_BFE.shp"
-  gis:set-world-envelope (gis:envelope-of cities-dataset)                                                       ;associate patches to local centroids
+to setup_map                                                                                                    ; create a function called setup_map
+  clear-all                                                                                                     ; clear the world
+  set cities-dataset gis:load-dataset "data/Local_Authority_Districts__December_2019__Boundaries_UK_BFE.shp"    ;to assign the dataset to the previously defined global variable named cities-dataset
+  gis:set-world-envelope (gis:envelope-of cities-dataset)                                                       ;defines a transformation between the NetLogo space and the GIS data space being used in the model.
   let i 1
   foreach gis:feature-list-of cities-dataset [ feature ->                                                       ;the feature list is the collection of all the polygons that make up the map and passed to the anonymous procedure inside the loop,
     ask patches gis:intersecting feature [                                                                      ;the patches intersecting the current feature in the list to overlay
-     set centroid gis:location-of gis:centroid-of feature
-      ask patch item 0 centroid item 1 centroid [
+     set centroid gis:location-of gis:centroid-of feature                                                       ;find the centroid of the polygon. The patch at the centroid will serve as a command center for that polygon.
+      ask patch item 0 centroid item 1 centroid [                                                               ;patch will set its ID variable to the value of i
       set ID i
      ]
     ]
-   set i i + 1
+   set i i + 1                                                                                                  ;ID variable to the value of i assigned to it in the future.
   ]
-  gis:set-drawing-color white
-  gis:draw cities-dataset 2
+  gis:set-drawing-color white                                                                                   ;drawn the line with white colour
+  gis:draw cities-dataset 2                                                                                     ;2 pixels
 
 
 
@@ -50,114 +46,120 @@ end
 
 
 
-to setup
-  ask patches with [ID > 0] [
-    set random-n random-float 10
-    ifelse random-n >= 5
+to setup                                                                                                       ; create a function called setup
+  ask patches with [ID > 0] [                                                                                  ; Each centroid patch is asked to update the polygon it controls to the appropriate color.
+    set random-n random-float 10                                                                               ; Using the random numbers
+    ifelse random-n >= 5                                                                                       ; if random number > or = 5
     [
-      gis:set-drawing-color blue
+      gis:set-drawing-color blue                                                                               ; set drawing colour blue
     ]
     [
-      gis:set-drawing-color green
+      gis:set-drawing-color green                                                                              ; set drawing colour green
 
     ]
-    gis:fill item (ID - 1)
-    gis:feature-list-of cities-dataset 2.0 ;thickness
+    gis:fill item (ID - 1)                                                                                     ; fill the polygon
+    gis:feature-list-of cities-dataset 2.0                                                                     ; filled with the appropriate color with a line thickness of 2.0 pixels.
   ]
 
-  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [
-    sprout 1 [
-      set color white set shape "circle"
-      healthy ]
+  ask n-of populationsofSTA patches with [centroid = [-43.888260987840745 -2.698801389489825]] [               ; ask number of patches in the polygon with centroid = [-43.888260987840745 -2.698801389489825] (in here is ST.Albans)
+    sprout 1 [                                                                                                 ; Creates new turtles on the current patch.
+      set color white set shape "circle"                                                                       ; set turtles's colour white and shape is circle
+      healthy ]                                                                                                ; call function "heathy"
   ]
-  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [
-    sprout 1 [
-      set color white set shape "x"
-      healthy ]
+  ask n-of populationofWandH patches with [centroid = [41.41899213807637 -5.461609758291327]] [                ; ask number of patches in the polygon with centroid = [41.41899213807637 -5.461609758291327] (in here is W and Hatfields)
+    sprout 1 [                                                                                                 ; Creates new turtles on the current patch.
+      set color white set shape "x"                                                                            ; set turtles's colour white and shape is "X"
+      healthy ]                                                                                                ; call function "heathy"
   ]
-  ask n-of infect turtles
-    [ get-infected ]
-  reset-ticks
+  ask n-of infect turtles                                                                                      ; create a number of infected turtles.
+    [ get-infected ]                                                                                           ; call fuction get-infected
+  reset-ticks                                                                                                  ; reset ticks counter
 
 end
 
-to go
+to go                                                                                                          ; create a function called go
 
-  move
-  set nb-infected count turtles with [infected? = true]
-  ask turtles [
-    decrease
-    if infected? != true [tranmiss]
-    if infected? = true [recover-or-die]
+  move                                                                                                         ; call the function go for turtles to wander around
+  set nb-infected count turtles with [infected? = true]                                                        ; set a global variable nb-infected to number of turtles with variable infected? is true
+  ask turtles [                                                                                                ; ask all turtles
+    decrease                                                                                                   ; call fucntion decrease
+    if infected? != true and color = white [tranmiss]                                                                            ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
+    if infected? = true [recover-or-die]                                                                       ; if turtle is infected the it can be die or recorvery from the virus
   ]
-  update-display
-  update-global-variables
-  show count turtles
-  tick
+  update-display                                                                                               ; call fucntion update-display
+  update-global-variables                                                                                      ; call function update-global-variable
+  show count turtles                                                                                           ; show the number survivor
+  tick                                                                                                         ; tick counter running
 
 end
 
-to move
-  ask turtles with [shape = "x" ] [ forward 0.05 ]
-  ask turtles with [shape = "x" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "x" ] [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327] [set heading heading - 100]]
-  ask turtles with [shape = "circle" ] [ forward 0.05]
-  ask turtles with [shape = "circle" ] [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  [set heading heading - 100]]
-  ask turtles with [shape = "circle" ] [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825] [set heading heading - 100]]
+to move                                                                                                            ; create function call move
+  ask turtles with [shape = "x" ]                                                                                  ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield)
+  [ forward 0.05 ]                                                                                                 ; move around with speed 0.05
+  ask turtles with [shape = "x" ]                                                                                  ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield)
+  [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  ; if they reach the bondaries of 2 GIS patches they will
+    [set heading heading - 100]]                                                                                   ; turn around 100 Degree
+  ask turtles with [shape = "x" ]                                                                                  ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield)
+  [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327]                                            ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [41.41899213807637 -5.461609758291327]
+    [set heading heading - 100]]                                                                                   ; turn around 100 Degree
+  ask turtles with [shape = "circle" ]                                                                             ; ask turtle with shape "X" (in here is turtles in St. Albans patch)
+  [ forward 0.05]                                                                                                  ; move around with speed 0.05
+  ask turtles with [shape = "circle" ]                                                                             ; ask turtle with shape "X" (in here is turtles in St. Albans patch)
+  [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  ; if they reach the bondaries of 2 GIS patches they will
+    [set heading heading - 100]]                                                                                   ; turn around 100 Degree
+  ask turtles with [shape = "circle" ]                                                                             ; ask turtle with shape "X" (in here is turtles in St. Albans patch)
+  [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825]                                          ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [-43.888260987840745 -2.698801389489825]
+    [set heading heading - 100]]                                                                                   ; turn around 100 Degree
 end
 
-to get-infected                                     ;this creates a function to set infected turtles
-  set infected?  true
-  set antibodies 0
-end
-
-
-to update-display                                   ;this creates a fuction to set colour of turtles
-  ask turtles
-    [ if infected? = true [set color red]
-      if antibodies > 0 [set color black] ]        ;if infected change the colour of turtles to red
-end
-
-to update-global-variables                          ;this to update the new number of infections and recovery
-  if count turtles > 0                              ;if number of turtles greater than 0
-    [ set %infected (nb-infected / count turtles) * 100   ;this to get the percentage of number of infection by (number of infections/number of turtles)x100
-   set %antibodies (count turtles with [ antibodies > 0 ] / count turtles) * 100 ]
-end
-
-to tranmiss  ;; turtle procedure
-
- ask other turtles-here with [ infected? != true  ]
-    [ if random-float 100 < infection-chance
-      [ get-infected ] ]
+to get-infected                                                                                            ; this creates a function to set infected turtles
+  set infected?  true                                                                                      ; set variable infected to true
+  set antibodies 0                                                                                         ; set variable antibodies to 0
 end
 
 
-to healthy ;; turtle procedure
-  set infected? false
-  set infect-time 0
+to update-display                                                                                          ; this creates a fuction to set colour of turtles
+  ask turtles                                                                                              ; ask all turtles
+    [ if infected? = true [set color red]                                                                  ; if the turtles is infected the colour turn red
+      if antibodies > 0 [set color black] ]                                                                ; if it have antibodies change the colour of turtles to black
 end
 
-to develop-antibody ;; turtle procedure
-   set infected? false
-   set infect-time 0
-   set antibodies immunity-last
+to update-global-variables                                                                                 ; this to update the new number of infections and recovery
+  if count turtles > 0                                                                                     ; if number of turtles greater than 0
+    [ set %infected (nb-infected / count turtles) * 100                                                    ; this to get the percentage of number of infection by (number of infections/number of turtles)x100
+   set %antibodies (count turtles with [ antibodies > 0 ] / count turtles) * 100 ]                         ; this to get the percentage of number of people have antibodies ((number of tutles with antibodies > 0) / number of tutles) x 100
+end
+
+to tranmiss                                                       ; this create fucntion tranmiss for turtles
+
+ ask other turtles-here with [ infected? != true ]                ; ask turtles with the variable infected? not true
+    [ if random-float 100 < infection-chance                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance"
+      [ get-infected ] ]                                          ; the turtles being infected
 end
 
 
-to decrease
-  if antibodies > 0 [ set antibodies antibodies - 1 ]
-  if infected? [ set infect-time infect-time + 1 ]
+to healthy                                                        ; this create a function called heathy for turtles
+  set infected? false                                             ; if the turtles is healthy set the variable infected? to false
+  set infect-time 0                                               ; reset the variable infected-time to 0
 end
 
-;to immune?
-  ;report antibodies > 0
-;end
+to develop-antibody                                               ; this create a function called develop-antibody for turtles
+   set infected? false                                            ; set variable infected? to false
+   set infect-time 0                                              ; infected-time to 0
+   set antibodies immunity-last                                   ; set the variable antibodies to the value of global variable immunity-last (in here minimum is 8 month = 5840 hous)
+end
 
-to recover-or-die ;; turtle procedure
-  if infect-time > 504                    ;; If the turtle has survived past the virus' duration, then
-    [ ifelse random-float 100 < chance-recovery   ;; either recover or die
-      [ develop-antibody ]
-      [ die ] ]
+
+to decrease                                                       ; this create a fucntion called decrease to decrease the time of antibodies last
+  if antibodies > 0 [ set antibodies antibodies - 1 ]             ; decrease the antibodies variable of turtles each tick
+  if infected? [ set infect-time infect-time + 1 ]                ; add 1 to variable infected-time each tick
+end
+
+to recover-or-die                                                 ; this create a funtion called recover-or-die
+  if infect-time > 504                                            ; If the turtle has survived past the virus' duration (with covid is 2 week = 504 hours to develop)
+    [ ifelse random-float 100 < chance-recovery                   ; create a random float number in range 0 to 100
+      [ develop-antibody ]                                        ; if the number < than global variable "chance-recovery " then the turtles have the antibodies
+      [ die ] ]                                                   ; else the turtle die
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -191,13 +193,13 @@ SLIDER
 21
 20
 176
-54
+53
 populationsofSTA
 populationsofSTA
 100
-1500
-1100.0
-1000
+3000
+2000.0
+100
 1
 NIL
 HORIZONTAL
@@ -206,7 +208,7 @@ SLIDER
 20
 136
 180
-170
+169
 populationofWandH
 populationofWandH
 100
@@ -238,7 +240,7 @@ SWITCH
 88
 99
 181
-133
+132
 stayLocal?
 stayLocal?
 1
@@ -283,12 +285,12 @@ SLIDER
 19
 173
 180
-207
+206
 infect
 infect
 0
 1000
-300.0
+20.0
 10
 1
 NIL
@@ -306,35 +308,36 @@ NIL
 11
 
 PLOT
-704
-17
-864
-137
-plot 1
-NIL
-NIL
+710
+18
+1018
+165
+Population
+Hours
+Number of People
 0.0
 100.0
 0.0
 100.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count turtles with [infected? = true]"
-"pen-1" 1.0 0 -2674135 true "" "plot count turtles with [antibodies > 0 ]"
+"infected" 1.0 0 -2674135 true "" "plot count turtles with [infected? = true]"
+"immune" 1.0 0 -16777216 true "" "plot count turtles with [antibodies > 0 ]"
+"total " 1.0 0 -13345367 true "" "plot count turtles "
 
 SLIDER
 19
 209
 180
-243
+242
 infection-chance
 infection-chance
-5
+0
 100
-75.0
-10
+15.0
+5
 1
 NIL
 HORIZONTAL
@@ -343,7 +346,7 @@ SLIDER
 18
 248
 180
-282
+281
 immunity-last
 immunity-last
 0
@@ -358,22 +361,22 @@ SLIDER
 13
 286
 185
-320
+319
 chance-recovery
 chance-recovery
 0
 100
-10.0
+90.0
 10
 1
 NIL
 HORIZONTAL
 
 MONITOR
-25
-340
-107
-386
+623
+72
+705
+117
 NIL
 %antibodies
 17
