@@ -5,6 +5,8 @@ globals[               ; defines the global variables
   %infected            ; this creates a global variable to hold what % of the population is infectious
   nb-infected          ; this to hold a global variable to hold the number of infection
   %antibodies          ; this creates a global variable to hold what % of the population have antibody with the virus
+  %people-vaccinated   ; this creates a global varibale to hold what % of the populatino have vaccine
+  nb-death             ; this creates a global varibale to hold the number of death occured
 
 ]
 
@@ -19,6 +21,7 @@ turtles-own            ; defines the variables belonging to each turtle.
   infected?            ; this creates a variable for the turles if true, the turtle is infectious
   infect-time          ; this creates a variable for turtles to hold the length of infection
   antibodies           ; this creates a variable for turtles to know if a turtle have antibody
+  have-vac?            ; this creates a variable for turtles to know if a turtle have been vaccinated
 
 ]
 
@@ -73,6 +76,8 @@ to setup                                                                        
   ]
   ask n-of infect turtles                                                                                      ; create a number of infected turtles.
     [ get-infected ]                                                                                           ; call fuction get-infected
+  ask n-of nb_people_vaccinated turtles                                                                        ; create a number of vaccinated turtles.
+    [vaccinated]                                                                                               ; call function vaccinated
   reset-ticks                                                                                                  ; reset ticks counter
 
 end
@@ -82,14 +87,21 @@ to go                                                                           
   move                                                                                                         ; call the function go for turtles to wander around
   set nb-infected count turtles with [infected? = true]                                                        ; set a global variable nb-infected to number of turtles with variable infected? is true
   ask turtles [                                                                                                ; ask all turtles
-    decrease                                                                                                   ; call fucntion decrease
-    if infected? != true and color = white [tranmiss]                                                                            ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
-    if infected? = true [recover-or-die]                                                                       ; if turtle is infected the it can be die or recorvery from the virus
+
+  decrease                                                                                                     ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
+  if infected? = true [recover-or-die]                                                                         ; if the turtle is infected then it can recovery or die
+  if not stayLocal? and infected? != true [tranmiss]                                                           ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
+  if stayLocal? [                                                                                              ; if the stayLocal? switch is on
+      if shape = "x" [tranmiss-welyn-H]                                                                        ; only "x" can infect "x"
+      if shape = "circle" [tranmiss-ST-alban]                                                                  ; only "circle" can infect "circle"
+  ]
   ]
   update-display                                                                                               ; call fucntion update-display
   update-global-variables                                                                                      ; call function update-global-variable
   show count turtles                                                                                           ; show the number survivor
   tick                                                                                                         ; tick counter running
+  if ticks >= 1000                                                                                             ; if tick greater than ...
+  [stop]                                                                                                       ; the model stop
 
 end
 
@@ -112,7 +124,7 @@ to move                                                                         
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
 end
 
-to get-infected                                                                                            ; this creates a function to set infected turtles
+to get-infected                                                                                            ; this creates a function to set infected turtles with random Probability
   set infected?  true                                                                                      ; set variable infected to true
   set antibodies 0                                                                                         ; set variable antibodies to 0
 end
@@ -127,14 +139,30 @@ end
 to update-global-variables                                                                                 ; this to update the new number of infections and recovery
   if count turtles > 0                                                                                     ; if number of turtles greater than 0
     [ set %infected (nb-infected / count turtles) * 100                                                    ; this to get the percentage of number of infection by (number of infections/number of turtles)x100
-   set %antibodies (count turtles with [ antibodies > 0 ] / count turtles) * 100 ]                         ; this to get the percentage of number of people have antibodies ((number of tutles with antibodies > 0) / number of tutles) x 100
+      set %antibodies (count turtles with [ antibodies > 0 ] / count turtles) * 100                        ; this to get the percentage of number of people have antibodies ((number of tutles with antibodies > 0) / number of tutles) x 100
+      set %people-vaccinated (count turtles with [have-vac? = true]/ count turtles) * 100                  ; this to calculate the percentage of number of people have been vaccinated
+      set nb-death  (populationsofSTA + populationofWandH) - count turtles ]                               ; this to get the number of people have died
 end
 
-to tranmiss                                                       ; this create fucntion tranmiss for turtles
+to tranmiss                                                                             ; this create fucntion tranmiss for turtles
 
- ask other turtles-here with [ infected? != true ]                ; ask turtles with the variable infected? not true
-    [ if random-float 100 < infection-chance                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance"
-      [ get-infected ] ]                                          ; the turtles being infected
+ ask other turtles-here with [ infected? != true and have-vac? != true ]                ; ask turtles with the variable infected? not true
+    [ if random-float 100 < infection-chance                                            ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance"
+      [ get-infected ] ]                                                                ; the turtles being infected
+end
+
+to tranmiss-ST-alban                                                                    ; this create function tranmiss for turtles of St. ALban (only "circle" can infect "circle") to use when the stayLocal? is on
+
+ ask other turtles-here with [shape = "circle" and color = white]                       ; ask other turtles with shape "circle" and have color white (uninfected)
+    [ if random-float 100 < (infection-chance * 30) / 100                               ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 70%)
+      [ get-infected ] ]                                                                ; the turtles being infected
+end
+
+to tranmiss-welyn-H                                                                     ; this create function tranmiss for turtles of Welwyn and Hatfield (only "x" can infect "x") to use when the stayLocal? is on
+
+ ask other turtles-here with [shape = "x" and color = white]                            ; ask other turtles with shape "x" and have color white (uninfected)
+    [ if random-float 100 < (infection-chance * 30) / 100                               ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 70%)
+      [ get-infected ] ]                                                                ; the turtles being infected
 end
 
 
@@ -156,20 +184,27 @@ to decrease                                                       ; this create 
 end
 
 to recover-or-die                                                 ; this create a funtion called recover-or-die
-  if infect-time > 504                                            ; If the turtle has survived past the virus' duration (with covid is 2 week = 504 hours to develop)
+  if infect-time > 504 and color = red                            ; If the turtle has survived past the virus' duration (with covid is 2 week = 504 hours to develop)
     [ ifelse random-float 100 < chance-recovery                   ; create a random float number in range 0 to 100
       [ develop-antibody ]                                        ; if the number < than global variable "chance-recovery " then the turtles have the antibodies
-      [ die ] ]                                                   ; else the turtle die
+      [ die  ] ]                                                  ; else the turtle die
+end
+
+to vaccinated                                                     ; this create a function call vaccinated
+   if vaccine? = true [                                           ;
+    set have-vac? true
+    healthy
+    set antibodies 10000]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-620
-421
+186
+16
+696
+527
 -1
 -1
-2.0
+2.751244
 1
 10
 1
@@ -186,7 +221,7 @@ GRAPHICS-WINDOW
 1
 1
 1
-weeks
+hours
 30.0
 
 SLIDER
@@ -198,7 +233,7 @@ populationsofSTA
 populationsofSTA
 100
 3000
-2000.0
+3000.0
 100
 1
 NIL
@@ -212,18 +247,18 @@ SLIDER
 populationofWandH
 populationofWandH
 100
-1500
-1100.0
+4000
+3100.0
 1000
 1
 NIL
 HORIZONTAL
 
 BUTTON
-20
-98
-84
-132
+71
+99
+135
+133
 Go
 go\n
 T
@@ -237,10 +272,10 @@ NIL
 1
 
 SWITCH
-88
-99
-181
-132
+709
+18
+802
+51
 stayLocal?
 stayLocal?
 1
@@ -290,17 +325,17 @@ infect
 infect
 0
 1000
-20.0
+360.0
 10
 1
 NIL
 HORIZONTAL
 
 MONITOR
-626
-17
-698
-62
+708
+276
+780
+321
 NIL
 %infected
 1
@@ -308,10 +343,10 @@ NIL
 11
 
 PLOT
-710
-18
-1018
-165
+807
+16
+1115
+163
 Population
 Hours
 Number of People
@@ -326,6 +361,7 @@ PENS
 "infected" 1.0 0 -2674135 true "" "plot count turtles with [infected? = true]"
 "immune" 1.0 0 -16777216 true "" "plot count turtles with [antibodies > 0 ]"
 "total " 1.0 0 -13345367 true "" "plot count turtles "
+"Vaccinated" 1.0 0 -1184463 true "" "plot count turtles with [have-vac? = true and antibodies > 0]"
 
 SLIDER
 19
@@ -336,7 +372,7 @@ infection-chance
 infection-chance
 0
 100
-15.0
+5.0
 5
 1
 NIL
@@ -366,19 +402,67 @@ chance-recovery
 chance-recovery
 0
 100
-90.0
+98.0
 10
 1
 NIL
 HORIZONTAL
 
 MONITOR
-623
-72
 705
-117
+331
+787
+376
 NIL
 %antibodies
+17
+1
+11
+
+SLIDER
+16
+328
+184
+361
+nb_people_vaccinated
+nb_people_vaccinated
+0
+3000
+2000.0
+100
+1
+NIL
+HORIZONTAL
+
+SWITCH
+710
+58
+800
+91
+vaccine?
+vaccine?
+1
+1
+-1000
+
+MONITOR
+708
+225
+836
+270
+NIL
+%people-vaccinated
+17
+1
+11
+
+MONITOR
+861
+226
+919
+271
+Death
+nb-death
 17
 1
 11
