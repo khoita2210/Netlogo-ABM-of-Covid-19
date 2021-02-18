@@ -7,6 +7,9 @@ globals[               ; defines the global variables
   %antibodies          ; this creates a global variable to hold what % of the population have antibody with the virus
   %people-vaccinated   ; this creates a global varibale to hold what % of the populatino have vaccine
   nb-death             ; this creates a global varibale to hold the number of death occured
+  nb-recovery          ; this creates a global varibale to hold the number of recovery case from the virus
+  nb-p-isolate         ; this creates a global varibale to hold the number of people in isolation
+  nb-p-out-isolate     ; this creates a global varibale to hold the number of people out of isolation
 
 ]
 
@@ -22,6 +25,9 @@ turtles-own            ; defines the variables belonging to each turtle.
   infect-time          ; this creates a variable for turtles to hold the length of infection
   antibodies           ; this creates a variable for turtles to know if a turtle have antibody
   have-vac?            ; this creates a variable for turtles to know if a turtle have been vaccinated
+  develop-anti-time    ; this variable is to store random time for turtles to develop antibodies
+  isolation?           ; this creates a variable for the turles if true, the turtle is in isolation
+  nb-isolation         ; this variable is to store random number of turtles will have to self isolation
 
 ]
 
@@ -78,6 +84,10 @@ to setup                                                                        
     [ get-infected ]                                                                                           ; call fuction get-infected
   ask n-of nb_people_vaccinated turtles                                                                        ; create a number of vaccinated turtles.
     [vaccinated]                                                                                               ; call function vaccinated
+  ask turtles [                                                                                                ; call all turtles to assigg random number of each turtle to develop antibody
+    create-random                                                                                              ; call fucntion create-random to take a random of number of turtles
+
+  ]
   reset-ticks                                                                                                  ; reset ticks counter
 
 end
@@ -88,10 +98,14 @@ to go                                                                           
   set nb-infected count turtles with [infected? = true]                                                        ; set a global variable nb-infected to number of turtles with variable infected? is true
   ask turtles [                                                                                                ; ask all turtles
 
-  decrease                                                                                                     ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
-  if infected? = true [recover-or-die]                                                                         ; if the turtle is infected then it can recovery or die
-  if not stayLocal? and infected? != true [tranmiss]                                                           ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
-  if stayLocal? [                                                                                              ; if the stayLocal? switch is on
+   decrease                                                                                                     ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
+   if infected? = true [recover-or-die]                                                                         ; if the turtle is infected then it can recovery or die
+   if isolation? != true and infected? = true and (random 100 < nb-isolation) [
+      isolate
+   ]
+   if isolation? = true [unisolate]
+   if not stayLocal? and infected? != true [tranmiss]                                                           ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
+   if stayLocal? [                                                                                              ; if the stayLocal? switch is on
       if shape = "x" [tranmiss-welyn-H]                                                                        ; only "x" can infect "x"
       if shape = "circle" [tranmiss-ST-alban]                                                                  ; only "circle" can infect "circle"
   ]
@@ -106,22 +120,23 @@ to go                                                                           
 end
 
 to move                                                                                                            ; create function call move
-  ask turtles with [shape = "x" ]                                                                                  ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield)
+  ask turtles with [shape = "x" and isolation? != true ]                                                           ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield) and they not in isolation
   [ forward 0.05 ]                                                                                                 ; move around with speed 0.05
-  ask turtles with [shape = "x" ]                                                                                  ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield)
+  ask turtles with [shape = "x" and isolation? != true ]                                                           ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield) and they not in isolation
   [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  ; if they reach the bondaries of 2 GIS patches they will
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
-  ask turtles with [shape = "x" ]                                                                                  ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield)
+  ask turtles with [shape = "x" and isolation? != true]                                                            ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield) and they not in isolation
   [if stayLocal? and centroid != [41.41899213807637 -5.461609758291327]                                            ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [41.41899213807637 -5.461609758291327]
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
-  ask turtles with [shape = "circle" ]                                                                             ; ask turtle with shape "X" (in here is turtles in St. Albans patch)
+  ask turtles with [shape = "circle" and isolation? != true]                                                       ; ask turtle with shape "X" (in here is turtles in St. Albans patch) and they not in isolation
   [ forward 0.05]                                                                                                  ; move around with speed 0.05
-  ask turtles with [shape = "circle" ]                                                                             ; ask turtle with shape "X" (in here is turtles in St. Albans patch)
+  ask turtles with [shape = "circle" and isolation? != true]                                                       ; ask turtle with shape "X" (in here is turtles in St. Albans patch) and they not in isolation
   [if centroid != [41.41899213807637 -5.461609758291327] and centroid != [-43.888260987840745 -2.698801389489825]  ; if they reach the bondaries of 2 GIS patches they will
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
-  ask turtles with [shape = "circle" ]                                                                             ; ask turtle with shape "X" (in here is turtles in St. Albans patch)
+  ask turtles with [shape = "circle" and isolation? != true]                                                       ; ask turtle with shape "X" (in here is turtles in St. Albans patch) and they not in isolation
   [if stayLocal? and centroid != [-43.888260987840745 -2.698801389489825]                                          ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [-43.888260987840745 -2.698801389489825]
-    [set heading heading - 100]]                                                                                   ; turn around 100 Degree
+    [set heading heading - 100]]
+  ; turn around 100 Degree
 end
 
 to get-infected                                                                                            ; this creates a function to set infected turtles with random Probability
@@ -129,11 +144,23 @@ to get-infected                                                                 
   set antibodies 0                                                                                         ; set variable antibodies to 0
 end
 
+to create-random                                                                                           ; this function is based on the "assign-tendency" function in the model Yang, C. and Wilensky, U. (2011).
+                                                                                                           ; NetLogo epiDEM Travel and Control model. http://ccl.northwestern.edu/netlogo/models/epiDEMTravelandControl.
+    set develop-anti-time random-normal 504 504 / 2                                                        ; set develop-anti-time to normally distributed random floating point number with a mean of 504 and a standard deviation 504/2
+    if develop-anti-time > 504 * 2 [ set develop-anti-time 504 * 2 ]                                       ; make sure it lies between 0 and 2x of 504 ticks
+    if develop-anti-time < 0 [ set develop-anti-time 0 ]
+    set nb-isolation random-normal isolation-percentage isolation-percentage / 4                           ; set nb-isolation to normally distributed random floating point number with a mean of isolation-percentage and a standard deviation isolation-percentage/4
+    if nb-isolation > isolation-percentage * 2 [ set nb-isolation isolation-percentage * 2 ]               ; make sure it lies between 0 and 2x of isolation-percentage
+    if nb-isolation < 0 [ set nb-isolation 0 ]
+end
+
 
 to update-display                                                                                          ; this creates a fuction to set colour of turtles
   ask turtles                                                                                              ; ask all turtles
     [ if infected? = true [set color red]                                                                  ; if the turtles is infected the colour turn red
-      if antibodies > 0 [set color black] ]                                                                ; if it have antibodies change the colour of turtles to black
+      if antibodies > 0 [set color black]                                                                  ; if it have antibodies change the colour of turtles to black
+      if isolation? = true [set color grey]                                                                ; if it in isolation turn to color grey
+  ]
 end
 
 to update-global-variables                                                                                 ; this to update the new number of infections and recovery
@@ -175,6 +202,7 @@ to develop-antibody                                               ; this create 
    set infected? false                                            ; set variable infected? to false
    set infect-time 0                                              ; infected-time to 0
    set antibodies immunity-last                                   ; set the variable antibodies to the value of global variable immunity-last (in here minimum is 8 month = 5840 hous)
+   set nb-recovery nb-recovery + 1
 end
 
 
@@ -184,24 +212,42 @@ to decrease                                                       ; this create 
 end
 
 to recover-or-die                                                 ; this create a funtion called recover-or-die
-  if infect-time > 504 and color = red                            ; If the turtle has survived past the virus' duration (with covid is 2 week = 504 hours to develop)
+  if infect-time > develop-anti-time and color = red              ; If the turtle has survived past the virus' duration (with covid is 2 week = 504 hours to develop or less of more)
     [ ifelse random-float 100 < chance-recovery                   ; create a random float number in range 0 to 100
       [ develop-antibody ]                                        ; if the number < than global variable "chance-recovery " then the turtles have the antibodies
       [ die  ] ]                                                  ; else the turtle die
 end
 
 to vaccinated                                                     ; this create a function call vaccinated
-   if vaccine? = true [                                           ;
-    set have-vac? true
-    healthy
-    set antibodies 10000]
+   if vaccine?  [                                                 ; if the switch vaccine is on
+    set have-vac? true                                            ; some turtles will have variable have-vac
+    healthy                                                       ; become healthy
+    set antibodies 10000]                                         ; set the amount of antibody to 10000
+end
+
+to isolate                                                        ; this is a fuction for turtles to make the turtle isolate
+  if seft-isolation? [                                            ; if the switch self-isolation? is on
+    set isolation? true                                           ; set the turtles variable to true
+    set nb-p-isolate nb-p-isolate + 1]                            ; add 1 to nb-p-isolate
+end
+
+to unisolate                                                      ; this is a turtle procedure to make the turtles out of isolation after some timeframe
+  if infect-time > 336 [                                          ; Set the isolation time to 2 week means 336 hours
+     set isolation? false                                         ; set the turtles variable isolation? to false
+     develop-antibody                                             ; after isolation turtles will develop antibody
+     if nb-p-isolate > 0 [                                        ; if nb-p-isolate is greater than 0
+      set nb-p-isolate nb-p-isolate - 1                           ; will reduce 1 to nb-p-isolate
+      set nb-p-out-isolate nb-p-out-isolate + 1                   ; will add 1 to nb-p-out-isolate
+    ]
+  ]
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
 186
 16
-696
-527
+747
+578
 -1
 -1
 2.751244
@@ -272,13 +318,13 @@ NIL
 1
 
 SWITCH
-709
-18
-802
-51
+765
+25
+877
+58
 stayLocal?
 stayLocal?
-1
+0
 1
 -1000
 
@@ -332,21 +378,21 @@ NIL
 HORIZONTAL
 
 MONITOR
-708
-276
-780
-321
+764
+283
+836
+328
 NIL
 %infected
-1
+2
 1
 11
 
 PLOT
-807
-16
-1115
-163
+1007
+230
+1329
+422
 Population
 Hours
 Number of People
@@ -358,9 +404,9 @@ true
 true
 "" ""
 PENS
-"infected" 1.0 0 -2674135 true "" "plot count turtles with [infected? = true]"
-"immune" 1.0 0 -16777216 true "" "plot count turtles with [antibodies > 0 ]"
-"total " 1.0 0 -13345367 true "" "plot count turtles "
+"Infected" 1.0 0 -2674135 true "" "plot count turtles with [infected? = true]"
+"Immune" 1.0 0 -16777216 true "" "plot count turtles with [antibodies > 0 ]"
+"Total " 1.0 0 -13345367 true "" "plot count turtles "
 "Vaccinated" 1.0 0 -1184463 true "" "plot count turtles with [have-vac? = true and antibodies > 0]"
 
 SLIDER
@@ -387,7 +433,7 @@ immunity-last
 immunity-last
 0
 10000
-5840.0
+7000.0
 1000
 1
 NIL
@@ -409,13 +455,13 @@ NIL
 HORIZONTAL
 
 MONITOR
-705
-331
-787
-376
+764
+335
+846
+380
 NIL
 %antibodies
-17
+2
 1
 11
 
@@ -435,37 +481,134 @@ NIL
 HORIZONTAL
 
 SWITCH
-710
-58
-800
-91
+766
+65
+877
+98
 vaccine?
 vaccine?
-1
+0
 1
 -1000
 
 MONITOR
-708
-225
-836
-270
+764
+232
+900
+277
 NIL
 %people-vaccinated
-17
+2
 1
 11
 
 MONITOR
-861
-226
-919
-271
+842
+282
+900
+327
 Death
 nb-death
 17
 1
 11
+
+MONITOR
+905
+232
+986
+277
+NIL
+nb-recovery
+17
+1
+11
+
+PLOT
+1198
+22
+1498
+217
+Death and Recovery
+NIL
+NIL
+0.0
+700.0
+0.0
+6000.0
+true
+true
+"" ""
+PENS
+"Death" 1.0 0 -16777216 true "" "plot nb-death"
+"Recovery " 1.0 0 -2674135 true "" "plot nb-recovery "
+
+SLIDER
+11
+373
+183
+406
+isolation-percentage
+isolation-percentage
+0
+100
+10.0
+10
+1
+NIL
+HORIZONTAL
+
+MONITOR
+907
+283
+986
+328
+NIL
+nb-p-isolate
+17
+1
+11
+
+MONITOR
+851
+335
+954
+380
+NIL
+nb-p-out-isolate
+17
+1
+11
+
+PLOT
+895
+25
+1190
+216
+Isolation table
+NIL
+NIL
+0.0
+2000.0
+0.0
+2000.0
+true
+true
+"" ""
+PENS
+"Finished Isolation" 1.0 0 -2674135 true "" "plot nb-p-out-isolate "
+"Isolation" 1.0 0 -13345367 true "" "plot nb-p-isolate "
+
+SWITCH
+764
+113
+879
+146
+seft-isolation?
+seft-isolation?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
