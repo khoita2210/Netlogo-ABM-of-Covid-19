@@ -10,12 +10,8 @@ globals[               ; defines the global variables
   nb-p-isolate         ; this creates a global varibale to hold the number of people in isolation
   nb-p-out-isolate     ; this creates a global varibale to hold the number of people out of isolation
   mortality-rate       ; this creates a global varibale to hold the percentage of mortality-rate
-  nb-infected-previous ; Number of infected people at the previous tick
-  beta-n               ; The average number of new secondary infections per infected this tick
-  gamma                ; The average number of new recoveries per infected this tick
-  a
-  recovery-cases
-  infect-rate
+  recovery-cases       ; this creates a global variable to hold the number of recovery cases
+  infect-rate          ; this creates a gloabl variable to monitor the rate of infection
 
 
 ]
@@ -35,10 +31,10 @@ turtles-own            ; defines the variables belonging to each turtle.
   develop-anti-time    ; this variable is to store random time for turtles to develop antibodies
   isolation?           ; this creates a variable for the turles if true, the turtle is in isolation
   nb-isolation         ; this variable is to store random number of turtles will have to self isolation
-  nb-infected          ; this to hold a global variable to hold the number of infection
-  nb-recovery          ; this creates a global varibale to hold the number of recovery case from the virus
-  nb-social-D
-  SD
+  nb-infected          ; this to hold a variable to hold the number of infection
+  nb-recovery          ; this creates a varibale to hold the number of recovery case from the virus
+  nb-social-D          ; this creates a varibale to hold the number of people do social distancing
+  socialD?             ; this creates a variable for the turles if true, the turtle is social Distancing
 
 ]
 
@@ -81,12 +77,12 @@ to setup                                                                        
     gis:feature-list-of cities-dataset 2.0                                                                     ; filled with the appropriate color with a line thickness of 2.0 pixels.
   ]
 
-  ask n-of populationsofSTA patches with [centroid = [-65.72321670318439 -4.041488647942474]] [               ; ask number of patches in the polygon with centroid = [-43.888260987840745 -2.698801389489825] (in here is ST.Albans)
+  ask n-of populationsofSTA patches with [centroid = [-65.72321670318439 -4.041488647942474]] [                ; ask number of patches in the polygon with centroid = [-65.72321670318439 -4.041488647942474] (in here is ST.Albans)
     sprout 1 [                                                                                                 ; Creates new turtles on the current patch.
       set color white set shape "circle"                                                                       ; set turtles's colour white and shape is circle
       healthy ]                                                                                                ; call function "heathy"
   ]
-  ask n-of populationofWandH patches with [centroid = [62.025455888363126 -8.178828543510893]] [                ; ask number of patches in the polygon with centroid = [41.41899213807637 -5.461609758291327] (in here is W and Hatfields)
+  ask n-of populationofWandH patches with [centroid = [62.025455888363126 -8.178828543510893]] [                ; ask number of patches in the polygon with centroid = [62.025455888363126 -8.178828543510893] (in here is W and Hatfields)
     sprout 1 [                                                                                                 ; Creates new turtles on the current patch.
       set color white set shape "x"                                                                            ; set turtles's colour white and shape is "X"
       healthy ]                                                                                                ; call function "heathy"
@@ -96,7 +92,7 @@ to setup                                                                        
   ask n-of nb_people_vaccinated turtles                                                                        ; create a number of vaccinated turtles.
     [
       if vaccine?  [
-        vaccinated]]                                                                                               ; call function vaccinated
+        vaccinated]]                                                                                           ; call function vaccinated
   ask turtles [                                                                                                ; call all turtles to assigg random number of each turtle to develop antibody
     create-random                                                                                              ; call fucntion create-random to take a random of number of turtles
 
@@ -107,24 +103,24 @@ end
 
 to go                                                                                                          ; create a function called go
 
-  move                                                                                                         ; call the function go for turtles to wander around
-  ;set nb-infected count turtles with [infected? = true]                                                        ; set a global variable nb-infected to number of turtles with variable infected? is true
+  move                                                                                                         ; call the function move for turtles to wander around
+  ;set nb-infected count turtles with [infected? = true]                                                       ; set a global variable nb-infected to number of turtles with variable infected? is true
   ask turtles [                                                                                                ; ask all turtles
-   clear-count
-   decrease                                                                                                     ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
-   if infected? = true [recover-or-die]                                                                         ; if the turtle is infected then it can recovery or die
-   if isolation? != true and infected? = true and (random 100 < nb-isolation) [
-      isolate
+   clear-count                                                                                                 ; clear count
+   decrease                                                                                                    ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
+   if infected? = true [recover-or-die]                                                                        ; if the turtle is infected then it can recovery or die
+   if isolation? != true and infected? = true and (random 100 < nb-isolation) [                                ; if the isolation switch is on and the turtles is infected
+      isolate                                                                                                  ; the turtle will self isolate
    ]
-   if socialDistancing? and random 100 < nb-social-D [
-      set SD true
+   if socialDistancing? and random 100 < nb-social-D [                                                         ; if the switch socialDistancing? of turtle is true then
+      set socialD? true                                                                                        ; set the value socialD? of turtle to true
 
     ]
-   if isolation? = true [unisolate]
-   if not stayLocal? and infected? != true and color != black [tranmiss]                                                           ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
-   if stayLocal? [                                                                                              ; if the stayLocal? switch is on
-      if shape = "x" and isolation? != true [tranmiss-welyn-H]                                                                        ; only "x" can infect "x"
-      if shape = "circle" and isolation? != true [tranmiss-ST-alban]                                                                  ; only "circle" can infect "circle"
+   if isolation? = true [unisolate]                                                                            ; if the turtle isolated, after 10 days it can unisolate
+   if not stayLocal? and infected? != true and color != black [tranmiss]                                       ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
+   if stayLocal? [                                                                                             ; if the stayLocal? switch is on
+      if shape = "x" and isolation? != true [tranmiss-welyn-H]                                                 ; only "x" can infect "x"
+      if shape = "circle" and isolation? != true [tranmiss-ST-alban]                                           ; only "circle" can infect "circle"
   ]
   ]
   update-display                                                                                               ; call fucntion update-display
@@ -138,52 +134,52 @@ to go                                                                           
 end
 to clear-count
 
-  set nb-infected 0
-  set nb-recovery 0
-
+  set nb-infected 0                                                                                            ; set to 0
+  set nb-recovery 0                                                                                            ; set to 0
 end
 
 
 to move                                                                                                            ; create function call move
   ask turtles with [shape = "x" and isolation? != true ]                                                           ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield) and they not in isolation
-  [ forward 0.2 ]                                                                                                 ; move around with speed 0.05
+  [ forward 0.2 ]                                                                                                  ; move around with speed 0.2
   ask turtles with [shape = "x" and isolation? != true ]                                                           ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield) and they not in isolation
   [if centroid != [62.025455888363126 -8.178828543510893] and centroid != [-65.72321670318439 -4.041488647942474]  ; if they reach the bondaries of 2 GIS patches they will
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
   ask turtles with [shape = "x" and isolation? != true]                                                            ; ask turtle with shape "X" (in here is turtles in Welwyn and Hatfield) and they not in isolation
-  [if stayLocal? and centroid != [62.025455888363126 -8.178828543510893]                                            ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [41.41899213807637 -5.461609758291327]
+  [if stayLocal? and centroid != [62.025455888363126 -8.178828543510893]                                           ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [41.41899213807637 -5.461609758291327]
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
   ask turtles with [shape = "circle" and isolation? != true]                                                       ; ask turtle with shape "X" (in here is turtles in St. Albans patch) and they not in isolation
-  [ forward 0.2]                                                                                                  ; move around with speed 0.05
+  [ forward 0.2]                                                                                                   ; move around with speed 0.2
   ask turtles with [shape = "circle" and isolation? != true]                                                       ; ask turtle with shape "X" (in here is turtles in St. Albans patch) and they not in isolation
   [if centroid != [62.025455888363126 -8.178828543510893] and centroid != [-65.72321670318439 -4.041488647942474]  ; if they reach the bondaries of 2 GIS patches they will
     [set heading heading - 100]]                                                                                   ; turn around 100 Degree
   ask turtles with [shape = "circle" and isolation? != true]                                                       ; ask turtle with shape "X" (in here is turtles in St. Albans patch) and they not in isolation
-  [if stayLocal? and centroid != [-65.72321670318439 -4.041488647942474]                                          ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [-43.888260987840745 -2.698801389489825]
-    [set heading heading - 100]]
-  ; turn around 100 Degree
-   ask turtles with [SD = true]
-      [ if socialDistancing? and any? turtles-on patch-ahead 1
-      [ set heading heading - 90] ]
+  [if stayLocal? and centroid != [-65.72321670318439 -4.041488647942474]                                           ; if the switch stayLocal? is on and turtle go outside the bondaries of polygon patch with centroid = [-43.888260987840745 -2.698801389489825]
+    [set heading heading - 100]]                                                                                   ; turn around 100 Degree
+  ask turtles with [socialD? = true]                                                                               ; ask turtle with have socialD value
+      [ if socialDistancing? and any? turtles-on patch-ahead 1                                                     ; Reports an agentset containing all the turtles that are on the given patch or patches
+      [ set heading heading - 90] ]                                                                                ; turn 90 degree
 
 end
+
 
 to get-infected                                                                                            ; this creates a function to set infected turtles with random Probability
   set infected?  true                                                                                      ; set variable infected to true
   set antibodies 0                                                                                         ; set variable antibodies to 0
-  set nb-infected (nb-infected + 1)
+  set nb-infected (nb-infected + 1)                                                                        ; add 1 to nb-infected
 end
+
 
 to create-random                                                                                           ; this function is based on the "assign-tendency" function in the model Yang, C. and Wilensky, U. (2011).
                                                                                                            ; NetLogo epiDEM Travel and Control model. http://ccl.northwestern.edu/netlogo/models/epiDEMTravelandControl.
-    set develop-anti-time random-normal 504 504 / 4                                                      ; set develop-anti-time to normally distributed random floating point number with a mean of 504 and a standard deviation 504/2
+    set develop-anti-time random-normal 504 504 / 2                                                        ; set develop-anti-time to normally distributed random floating point number with a mean of 504 and a standard deviation 504/2
     if develop-anti-time > 504 * 2 [ set develop-anti-time 504 * 2 ]                                       ; make sure it lies between 0 and 2x of 504 ticks
     if develop-anti-time < 0 [ set develop-anti-time 0 ]
     set nb-isolation random-normal isolation-percentage isolation-percentage / 4                           ; set nb-isolation to normally distributed random floating point number with a mean of isolation-percentage and a standard deviation isolation-percentage/4
     if nb-isolation > isolation-percentage * 2 [ set nb-isolation isolation-percentage * 2 ]               ; make sure it lies between 0 and 2x of isolation-percentage
     if nb-isolation < 0 [ set nb-isolation 0 ]
-    set nb-social-D random-normal social-D-percentage social-D-percentage / 4                           ; set nb-isolation to normally distributed random floating point number with a mean of isolation-percentage and a standard deviation isolation-percentage/4
-    if nb-social-D > social-D-percentage * 2 [ set nb-social-D social-D-percentage * 2 ]               ; make sure it lies between 0 and 2x of isolation-percentage
+    set nb-social-D random-normal social-D-percentage social-D-percentage / 4                              ; set nb-social-D to normally distributed random floating point number with a mean of social-D-percentage and a standard deviation isolation-percentage/4
+    if nb-social-D > social-D-percentage * 2 [ set nb-social-D social-D-percentage * 2 ]                   ; make sure it lies between 0 and 2x of social-D-percentage
     if nb-social-D < 0 [ set nb-social-D 0 ]
 end
 
@@ -196,6 +192,7 @@ to update-display                                                               
   ]
 end
 
+
 to update-global-variables                                                                                 ; this to update the new number of infections and recovery
   if count turtles > 0                                                                                     ; if number of turtles greater than 0
     [ set %infected (count turtles with [infected? = true] / count turtles) * 100                          ; this to get the percentage of number of infection by (number of infections/number of turtles)x100
@@ -203,133 +200,154 @@ to update-global-variables                                                      
       set %people-vaccinated (count turtles with [have-vac? = true]/ count turtles) * 100                  ; this to calculate the percentage of number of people have been vaccinated
       set nb-death  (populationsofSTA + populationofWandH) - count turtles                                 ; this to get the number of people have died
       calculate-mortality-rate                                                                             ; call the function to calculate the mortality rate
-      calculate-rates                                                                                      ;
+      calculate-rates                                                                                      ; call the function to calculate the infection rates
 
   ]
 end
 
+
 to tranmiss                                                                                                    ; this create fucntion tranmiss for turtles
- if not vaccine? and not socialDistancing?[                                                                                             ; if the vaccine switch is turn off
-  ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]                ; ask turtles with the variable infected? not true
+ if not vaccine? and not socialDistancing?[                                                                    ; if the vaccine? and socialDistancing?  switch is turn off
+  ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
     [ if random-float 100 < infection-chance                                                                   ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance"
       [ get-infected ] ]]                                                                                      ; the turtles being infected
- if vaccine? and not socialDistancing?[                                                                                                ; if the vaccine switch is turn on
-  ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
+
+ if vaccine? and not socialDistancing?[                                                                        ; if the vaccine switch is turn on but the socialDistancing? switch is turn off
+  ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 50) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
- if vaccine? and socialDistancing? and social-D-percentage >= 80 [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 10) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 45) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-  if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 35) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and social-D-percentage = 0   [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < infection-chance                                                                   ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and social-D-percentage >= 80 [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
+
+ if vaccine? and socialDistancing? and social-D-percentage >= 80 [                                             ; if both 2 switch vaccine? and socialDistancing? and social-D-percentage > 80
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    [ if random-float 100 < (infection-chance * 30) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 70%
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
+
+ if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [                ; if both 2 switch vaccine? and socialDistancing? and social-D-percentage <30
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    [ if random-float 100 < (infection-chance * 45) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 55%
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
+
+  if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [             ; if both 2 switch vaccine? and socialDistancing? and 30 <= social-D-percentage < 80
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    [ if random-float 100 < (infection-chance * 35) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 65%
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
+
+ if not vaccine? and socialDistancing? and social-D-percentage = 0   [                                         ; if not vaccine? and socialDistancing? and social-D-percentage = 0
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    [ if random-float 100 < infection-chance                                                                   ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance is the same
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
+
+ if not vaccine? and socialDistancing? and social-D-percentage >= 80 [                                         ; if not vaccine? and socialDistancing? and social-D-percentage >= 80
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 50) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 80) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-  if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 70 ) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
+
+ if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [            ; if not vaccine? and socialDistancing? and 0 <= social-D-percentage <30
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    [ if random-float 100 < (infection-chance * 80) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 20%
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
+
+  if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [         ; if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80
+    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    [ if random-float 100 < (infection-chance * 70 ) / 100                                                     ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 30%
+      [ get-infected ] ]]                                                                                      ; the turtles being infected
 end
+
 
 to tranmiss-ST-alban                                                                                           ; this create function tranmiss for turtles of St. ALban (only "circle" can infect "circle") to use when the stayLocal? is on
- if not vaccine? and not socialDistancing?[
-  ask other turtles-here with [shape = "circle" and color = white and isolation? != true ]                      ; ask other turtles with shape "circle" and have color white (uninfected)
-    [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 70%)
-      [ get-infected ] ] ]
-  ; the turtles being infected
- if vaccine? and not socialDistancing?[                                                                                                ; if the vaccine switch is turn on
-  ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 10) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if vaccine? and socialDistancing? and social-D-percentage >= 80 [
-    ask other turtles-here with [shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 5) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [
-    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 8) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-  if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [
-    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 9) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and social-D-percentage = 0   [
-    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 20) / 100                                                                 ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and social-D-percentage >= 80 [
-    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 15) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [
-    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 19) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-  if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [
-    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 15 ) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
+ if not vaccine? and not socialDistancing?[                                                                    ; if 2 switch vaccine? and socialDistancing? are off
+  ask other turtles-here with [shape = "circle" and color = white and isolation? != true ]                     ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 80%)
+      [ get-infected ] ] ]                                                                                     ; being infected
 
+ if vaccine? and not socialDistancing?[                                                                        ; if the vaccine switch is turn on
+  ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]                    ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 10) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 90%
+      [ get-infected ] ]]                                                                                      ; being infected
 
+ if vaccine? and socialDistancing? and social-D-percentage >= 80 [                                             ; if the vaccine switch is turn on and social-D-percentage >= 80
+    ask other turtles-here with [shape = "circle" and color = white and isolation? != true ]                   ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 5) / 100                                                       ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 95%
+      [ get-infected ] ]]                                                                                      ; being infected
 
+ if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [                ; if the vaccine switch is turn on and 0 <= social-D-percentage and social-D-percentage < 30
+    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true]                   ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 9) / 100                                                       ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 91%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+  if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [             ; if the vaccine switch is turn on and 30 <= social-D-percentage and social-D-percentage < 80
+    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]                  ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 7) / 100                                                       ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 93%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if not vaccine? and socialDistancing? and social-D-percentage = 0   [                                         ; if the vaccine switch is turn on and social-D-percentage = 0
+    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]                  ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 80%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if not vaccine? and socialDistancing? and social-D-percentage >= 80 [                                         ; if the vaccine switch is turn off and social-D-percentage >= 80
+    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]                  ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 12) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 88%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [            ; if the vaccine switch is turn off and 0 <= social-D-percentage and social-D-percentage < 30
+    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]                  ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 19) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 81%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+  if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [         ; if the vaccine switch is turn off and 30 <= social-D-percentage and social-D-percentage < 80
+    ask other turtles-here with [ shape = "circle" and color = white and isolation? != true ]                  ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 15 ) / 100                                                     ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 85%
+      [ get-infected ] ]]                                                                                      ; being infected
 end
+
 
 to tranmiss-welyn-H                                                                                            ; this create function tranmiss for turtles of Welwyn and Hatfield (only "x" can infect "x") to use when the stayLocal? is on
 
-if not vaccine? and not socialDistancing?[
-  ask other turtles-here with [shape = "x" and color = white and isolation? != true ]                      ; ask other turtles with shape "circle" and have color white (uninfected)
-    [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 70%)
-      [ get-infected ] ] ]
-  ; the turtles being infected
- if vaccine? and not socialDistancing?[                                                                                                ; if the vaccine switch is turn on
-  ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 10) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if vaccine? and socialDistancing? and social-D-percentage >= 80 [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 5) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 8) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-  if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 9) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and social-D-percentage = 0   [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 20) / 100                                                                 ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and social-D-percentage >= 80 [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 15) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
- if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 19) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-  if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [
-    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]               ; ask turtles with the variable infected? not true
-    [ if random-float 100 < (infection-chance * 15 ) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
-      [ get-infected ] ]]
-                                                                                   ; the turtles being infected
+if not vaccine? and not socialDistancing?[                                                                     ; if 2 switch vaccine? and socialDistancing? are off
+  ask other turtles-here with [shape = "x" and color = white and isolation? != true ]                          ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 80%)
+      [ get-infected ] ] ]                                                                                     ; being infected
+
+ if vaccine? and not socialDistancing?[                                                                        ; if the vaccine switch is turn on
+  ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                         ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 10) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 90%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if vaccine? and socialDistancing? and social-D-percentage >= 80 [                                             ; if the vaccine switch is turn on and social-D-percentage >= 80
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                       ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 5) / 100                                                       ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 95%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [                ; if the vaccine switch is turn on and 0 <= social-D-percentage and social-D-percentage < 30
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true]                        ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 9) / 100                                                       ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 91%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+  if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [             ; if the vaccine switch is turn on and 30 <= social-D-percentage and social-D-percentage < 80
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                       ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 7) / 100                                                       ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 93%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if not vaccine? and socialDistancing? and social-D-percentage = 0   [                                         ; if the vaccine switch is turn on and social-D-percentage = 0
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                       ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 80%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if not vaccine? and socialDistancing? and social-D-percentage >= 80 [                                         ; if the vaccine switch is turn off and social-D-percentage >= 80
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                       ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 12) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 88%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+ if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [            ; if the vaccine switch is turn off and 0 <= social-D-percentage and social-D-percentage < 30
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                       ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 19) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 81%
+      [ get-infected ] ]]                                                                                      ; being infected
+
+  if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [         ; if the vaccine switch is turn off and 30 <= social-D-percentage and social-D-percentage < 80
+    ask other turtles-here with [ shape = "x" and color = white and isolation? != true ]                       ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
+    [ if random-float 100 < (infection-chance * 15 ) / 100                                                     ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 85%
+      [ get-infected ] ]]                                                                                      ; being infected
 end
 
 
@@ -338,12 +356,12 @@ to healthy                                                        ; this create 
   set infect-time 0                                               ; reset the variable infected-time to 0
 end
 
+
 to develop-antibody                                               ; this create a function called develop-antibody for turtles
    set infected? false                                            ; set variable infected? to false
    set infect-time 0                                              ; infected-time to 0
    set antibodies immunity-last                                   ; set the variable antibodies to the value of global variable immunity-last (in here minimum is 8 month = 5840 hous)
-   set nb-recovery (nb-recovery + 1)
-   set recovery-cases (recovery-cases + 1)
+   set nb-recovery (nb-recovery + 1)                              ; added 1 to nb-recovery
 end
 
 
@@ -352,12 +370,14 @@ to decrease                                                       ; this create 
   if infected? [ set infect-time infect-time + 1 ]                ; add 1 to variable infected-time each tick
 end
 
+
 to recover-or-die                                                 ; this create a funtion called recover-or-die
   if infect-time > develop-anti-time and color = red              ; If the turtle has survived past the virus' duration (with covid is 2 week = 504 hours to develop or less of more)
     [ ifelse random-float 100 < chance-recovery                   ; create a random float number in range 0 to 100
       [ develop-antibody ]                                        ; if the number < than global variable "chance-recovery " then the turtles have the antibodies
       [ die  ] ]                                                  ; else the turtle die
 end
+
 
 to vaccinated                                                     ; this create a function call vaccinated
                                                                   ; if the switch vaccine is on
@@ -366,11 +386,13 @@ to vaccinated                                                     ; this create 
     set antibodies 10000                                          ; set the amount of antibody to 10000
 end
 
+
 to isolate                                                        ; this is a fuction for turtles to make the turtle isolate
   if seft-isolation? [                                            ; if the switch self-isolation? is on
     set isolation? true                                           ; set the turtles variable to true
     set nb-p-isolate nb-p-isolate + 1]                            ; add 1 to nb-p-isolate
 end
+
 
 to unisolate                                                      ; this is a turtle procedure to make the turtles out of isolation after some timeframe
   if infect-time > 336 [                                          ; Set the isolation time to 2 week means 336 hours
@@ -385,33 +407,18 @@ to unisolate                                                      ; this is a tu
 end
 
 
-
-
-
-to calculate-mortality-rate
-  set mortality-rate (nb-death / count turtles) * 100
+to calculate-mortality-rate                                                            ; this function is to calculate the curde mortality rate per 100,000 population
+  set mortality-rate (nb-death / (populationsofSTA + populationofWandH ) ) * 100000    ; Deaths occurring during a given time period divided by Size of the population among which the deaths occurred× 100000
 end
 
 
-to calculate-rates
+to calculate-rates                                                                     ; this function is to calculate the infection rate and the number of people recovered from the virus
 
   ;let new-infected sum [ nb-infected ] of turtles
-  let new-recovered sum [ nb-recovery ] of turtles
-  set a count turtles with [color = black and have-vac? != true]
-  show a
-  set infect-rate (count turtles with [color = red] / count turtles) * 100
-  ;;set nb-infected-previous (count turtles with [ infected? = true ] + new-recovered - new-infected)  ;; Number of infected people at the previous tick
-  ;ifelse nb-infected-previous < 10
-  ;[ set beta-n 0 ]
-  ;[
-  ;  set beta-n (new-infected / nb-infected-previous)       ;; This is the average number of new secondary infections per infected this tick
-  ;]
+  set recovery-cases  count turtles with [color = black and have-vac? != true]         ; calculate the number recovered by counting the number with coulor black (have antibodies) and without vaccine
+  set infect-rate (count turtles with [color = red] / count turtles) * 100             ; # of Infections / Population at Risk X constant (k) = Rate of Infection Constant K is 100 assign value of 100 means the percentage.
+                                                                                       ; color red is the infection case
 
-  ;ifelse nb-infected-previous < 5
-  ;[ set gamma 0 ]
-  ;[
-  ;  set gamma (new-recovered / nb-infected-previous)     ;; This is the average number of new recoveries per infected this tick
-  ;]
 
 
 end
@@ -452,7 +459,7 @@ populationsofSTA
 populationsofSTA
 100
 14000
-7100.0
+7469.0
 1000
 1
 NIL
@@ -467,7 +474,7 @@ populationofWandH
 populationofWandH
 100
 13000
-6100.0
+6137.0
 1000
 1
 NIL
@@ -562,10 +569,10 @@ NIL
 11
 
 PLOT
-1189
-232
-1511
-391
+1032
+337
+1474
+586
 Population
 Hours
 Number of People
@@ -589,7 +596,7 @@ infection-chance
 infection-chance
 0
 100
-5.0
+1.8
 5
 1
 NIL
@@ -604,7 +611,7 @@ immunity-last
 immunity-last
 0
 10000
-5000.0
+2040.0
 1000
 1
 NIL
@@ -645,7 +652,7 @@ nb_people_vaccinated
 nb_people_vaccinated
 0
 10000
-900.0
+4500.0
 100
 1
 NIL
@@ -658,7 +665,7 @@ SWITCH
 98
 vaccine?
 vaccine?
-0
+1
 1
 -1000
 
@@ -688,7 +695,7 @@ PLOT
 1198
 22
 1498
-217
+216
 Death 
 NIL
 NIL
@@ -701,6 +708,7 @@ true
 "" ""
 PENS
 "Death" 1.0 0 -16777216 true "" "plot nb-death"
+"Mortality rate per 100K" 1.0 0 -2674135 true "" "plot mortality-rate"
 
 SLIDER
 11
@@ -711,7 +719,7 @@ isolation-percentage
 isolation-percentage
 0
 100
-75.0
+80.0
 5
 1
 NIL
@@ -772,7 +780,7 @@ seft-isolation?
 PLOT
 763
 389
-1150
+1025
 586
 Infection Rates
 NIL
@@ -785,7 +793,6 @@ true
 false
 "" ""
 PENS
-"pen-1" 1.0 0 -2674135 true "" "plot mortality-rate"
 "pen-3" 1.0 0 -16777216 true "" "plot infect-rate\n"
 
 MONITOR
@@ -827,16 +834,16 @@ MONITOR
 1014
 329
 Recovery-Cases
-a
+recovery-cases
 17
 1
 11
 
 SWITCH
-766
-162
-894
-195
+762
+157
+890
+190
 socialDistancing?
 socialDistancing?
 0
@@ -852,7 +859,7 @@ social-D-percentage
 social-D-percentage
 0
 100
-100.0
+90.0
 10
 1
 NIL
