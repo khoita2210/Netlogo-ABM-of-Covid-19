@@ -14,6 +14,7 @@ globals[               ; defines the global variables
   infect-rate          ; this creates a gloabl variable to monitor the rate of infection
 
 
+
 ]
 
 patches-own [          ;defines the variables belonging to each patch
@@ -54,15 +55,6 @@ to setup_map                                                                    
   ]
   gis:set-drawing-color white                                                                                   ;drawn the line with white colour
   gis:draw cities-dataset 2                                                                                     ;2 pixels
-
-
-
-end
-
-
-
-
-to setup                                                                                                       ; create a function called setup
   ask patches with [ID > 0] [                                                                                  ; Each centroid patch is asked to update the polygon it controls to the appropriate color.
     set random-n random-float 10                                                                               ; Using the random numbers
     ifelse random-n >= 5                                                                                       ; if random number > or = 5
@@ -76,6 +68,16 @@ to setup                                                                        
     gis:fill item (ID - 1)                                                                                     ; fill the polygon
     gis:feature-list-of cities-dataset 2.0                                                                     ; filled with the appropriate color with a line thickness of 2.0 pixels.
   ]
+
+
+
+end
+
+
+
+
+to setup                                                                                                       ; create a function called setup
+
 
   ask n-of populationsofSTA patches with [centroid = [-65.72321670318439 -4.041488647942474]] [                ; ask number of patches in the polygon with centroid = [-65.72321670318439 -4.041488647942474] (in here is ST.Albans)
     sprout 1 [                                                                                                 ; Creates new turtles on the current patch.
@@ -104,10 +106,9 @@ end
 to go                                                                                                          ; create a function called go
 
   move                                                                                                         ; call the function move for turtles to wander around
-  ;set nb-infected count turtles with [infected? = true]                                                       ; set a global variable nb-infected to number of turtles with variable infected? is true
   ask turtles [                                                                                                ; ask all turtles
    clear-count                                                                                                 ; clear count
-   decrease                                                                                                    ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function tranmiss)
+   decrease                                                                                                    ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function transmisstion)
    if infected? = true [recover-or-die]                                                                        ; if the turtle is infected then it can recovery or die
    if isolation? != true and infected? = true and (random 100 < nb-isolation) [                                ; if the isolation switch is on and the turtles is infected
       isolate                                                                                                  ; the turtle will self isolate
@@ -117,10 +118,10 @@ to go                                                                           
 
     ]
    if isolation? = true [unisolate]                                                                            ; if the turtle isolated, after 10 days it can unisolate
-   if not stayLocal? and infected? != true and color != black [tranmiss]                                       ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
+   if not stayLocal? and infected? != true and color != black [transmisstion]                                       ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
    if stayLocal? [                                                                                             ; if the stayLocal? switch is on
-      if shape = "x" and isolation? != true [tranmiss-welyn-H]                                                 ; only "x" can infect "x"
-      if shape = "circle" and isolation? != true [tranmiss-ST-alban]                                           ; only "circle" can infect "circle"
+      if shape = "x" and isolation? != true [transmisstion-welyn-H]                                                 ; only "x" can infect "x"
+      if shape = "circle" and isolation? != true [transmisstion-ST-alban]                                           ; only "circle" can infect "circle"
   ]
   ]
   update-display                                                                                               ; call fucntion update-display
@@ -206,7 +207,7 @@ to update-global-variables                                                      
 end
 
 
-to tranmiss                                                                                                    ; this create fucntion tranmiss for turtles
+to transmisstion                                                                                                    ; this create fucntion transmisstion for turtles
  if not vaccine? and not socialDistancing?[                                                                    ; if the vaccine? and socialDistancing?  switch is turn off
   ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
     [ if random-float 100 < infection-chance                                                                   ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance"
@@ -254,7 +255,7 @@ to tranmiss                                                                     
 end
 
 
-to tranmiss-ST-alban                                                                                           ; this create function tranmiss for turtles of St. ALban (only "circle" can infect "circle") to use when the stayLocal? is on
+to transmisstion-ST-alban                                                                                           ; this create function transmisstion for turtles of St. ALban (only "circle" can infect "circle") to use when the stayLocal? is on
  if not vaccine? and not socialDistancing?[                                                                    ; if 2 switch vaccine? and socialDistancing? are off
   ask other turtles-here with [shape = "circle" and color = white and isolation? != true ]                     ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
     [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 80%)
@@ -302,7 +303,7 @@ to tranmiss-ST-alban                                                            
 end
 
 
-to tranmiss-welyn-H                                                                                            ; this create function tranmiss for turtles of Welwyn and Hatfield (only "x" can infect "x") to use when the stayLocal? is on
+to transmisstion-welyn-H                                                                                            ; this create function transmisstion for turtles of Welwyn and Hatfield (only "x" can infect "x") to use when the stayLocal? is on
 
 if not vaccine? and not socialDistancing?[                                                                     ; if 2 switch vaccine? and socialDistancing? are off
   ask other turtles-here with [shape = "x" and color = white and isolation? != true ]                          ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
@@ -421,6 +422,9 @@ to calculate-rates                                                              
 
 
 
+
+
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -451,10 +455,10 @@ hours
 30.0
 
 SLIDER
-21
-20
-176
-53
+23
+93
+178
+126
 populationsofSTA
 populationsofSTA
 100
@@ -481,10 +485,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-71
-99
-135
-133
+73
+53
+137
+87
 Go
 go\n
 T
@@ -509,10 +513,10 @@ stayLocal?
 -1000
 
 BUTTON
-21
-60
-114
-93
+23
+14
+116
+47
 NIL
 setup_map\n
 NIL
@@ -526,10 +530,10 @@ NIL
 1
 
 BUTTON
-118
-60
-181
-93
+120
+14
+183
+47
 NIL
 setup\n
 NIL
@@ -551,7 +555,7 @@ infect
 infect
 0
 1000
-18.0
+20.0
 10
 1
 NIL
@@ -596,7 +600,7 @@ infection-chance
 infection-chance
 0
 100
-1.8
+0.8
 5
 1
 NIL
@@ -651,7 +655,7 @@ SLIDER
 nb_people_vaccinated
 nb_people_vaccinated
 0
-10000
+13000
 4500.0
 100
 1
@@ -665,7 +669,7 @@ SWITCH
 98
 vaccine?
 vaccine?
-1
+0
 1
 -1000
 
@@ -859,7 +863,7 @@ social-D-percentage
 social-D-percentage
 0
 100
-90.0
+100.0
 10
 1
 NIL
