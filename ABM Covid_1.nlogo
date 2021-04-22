@@ -84,7 +84,7 @@ to setup                                                                        
       set color white set shape "circle"                                                                       ; set turtles's colour white and shape is circle
       healthy ]                                                                                                ; call function "heathy"
   ]
-  ask n-of populationofWandH patches with [centroid = [62.025455888363126 -8.178828543510893]] [                ; ask number of patches in the polygon with centroid = [62.025455888363126 -8.178828543510893] (in here is W and Hatfields)
+  ask n-of populationofWandH patches with [centroid = [62.025455888363126 -8.178828543510893]] [               ; ask number of patches in the polygon with centroid = [62.025455888363126 -8.178828543510893] (in here is W and Hatfields)
     sprout 1 [                                                                                                 ; Creates new turtles on the current patch.
       set color white set shape "x"                                                                            ; set turtles's colour white and shape is "X"
       healthy ]                                                                                                ; call function "heathy"
@@ -108,7 +108,7 @@ to go                                                                           
   move                                                                                                         ; call the function move for turtles to wander around
   ask turtles [                                                                                                ; ask all turtles
    clear-count                                                                                                 ; clear count
-   decrease                                                                                                    ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function transmisstion)
+   decrease                                                                                                    ; call fucntion decrease                                                                             ; if turtle is not infected then it can be tranfered the virus (function transmission)
    if infected? = true [recover-or-die]                                                                        ; if the turtle is infected then it can recovery or die
    if isolation? != true and infected? = true and (random 100 < nb-isolation) [                                ; if the isolation switch is on and the turtles is infected
       isolate                                                                                                  ; the turtle will self isolate
@@ -117,11 +117,11 @@ to go                                                                           
       set socialD? true                                                                                        ; set the value socialD? of turtle to true
 
     ]
-   if isolation? = true [unisolate]                                                                            ; if the turtle isolated, after 10 days it can unisolate
-   if not stayLocal? and infected? != true and color != black [transmisstion]                                       ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
-   if stayLocal? [                                                                                             ; if the stayLocal? switch is on
-      if shape = "x" and isolation? != true [transmisstion-welyn-H]                                                 ; only "x" can infect "x"
-      if shape = "circle" and isolation? != true [transmisstion-ST-alban]                                           ; only "circle" can infect "circle"
+   if isolation? = true [unisolate]                                                                           ; if the turtle isolated, after 10 days it can unisolate
+   if not stayLocal? and infected? != true and color != black [transmission]                                  ; if the stayLocal? switch is off turtles with shape "x" can infect turtles with shape "circle" and " circle" can infect "x"
+   if stayLocal? [                                                                                            ; if the stayLocal? switch is on
+      if shape = "x" and isolation? != true [transmission-welyn-H]                                            ; only "x" can infect "x"
+      if shape = "circle" and isolation? != true [transmission-ST-alban]                                      ; only "circle" can infect "circle"
   ]
   ]
   update-display                                                                                               ; call fucntion update-display
@@ -201,61 +201,61 @@ to update-global-variables                                                      
       set %people-vaccinated (count turtles with [have-vac? = true]/ count turtles) * 100                  ; this to calculate the percentage of number of people have been vaccinated
       set nb-death  (populationsofSTA + populationofWandH) - count turtles                                 ; this to get the number of people have died
       calculate-mortality-rate                                                                             ; call the function to calculate the mortality rate
-      calculate-rates                                                                                      ; call the function to calculate the infection rates
+      calculate-infection-rate                                                                             ; call the function to calculate the infection rates
 
   ]
 end
 
 
-to transmisstion                                                                                                    ; this create fucntion transmisstion for turtles
+to transmission                                                                                                ; this create fucntion transmission for turtles
  if not vaccine? and not socialDistancing?[                                                                    ; if the vaccine? and socialDistancing?  switch is turn off
-  ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true
+  ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                   ; ask turtles with the variable infected? not true
     [ if random-float 100 < infection-chance                                                                   ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance"
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
  if vaccine? and not socialDistancing?[                                                                        ; if the vaccine switch is turn on but the socialDistancing? switch is turn off
-  ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]               ; ask turtles with the variable infected? not true and not in isolation
+  ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                   ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 50) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
  if vaccine? and socialDistancing? and social-D-percentage >= 80 [                                             ; if both 2 switch vaccine? and socialDistancing? and social-D-percentage > 80
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 30) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 70%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
  if vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [                ; if both 2 switch vaccine? and socialDistancing? and social-D-percentage <30
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 45) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 55%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
   if vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [             ; if both 2 switch vaccine? and socialDistancing? and 30 <= social-D-percentage < 80
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 35) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 65%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
  if not vaccine? and socialDistancing? and social-D-percentage = 0   [                                         ; if not vaccine? and socialDistancing? and social-D-percentage = 0
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < infection-chance                                                                   ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance is the same
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
  if not vaccine? and socialDistancing? and social-D-percentage >= 80 [                                         ; if not vaccine? and socialDistancing? and social-D-percentage >= 80
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 50) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 50%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
  if not vaccine? and socialDistancing? and 0 <= social-D-percentage and social-D-percentage < 30  [            ; if not vaccine? and socialDistancing? and 0 <= social-D-percentage <30
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 80) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 20%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 
   if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80   [         ; if not vaccine? and socialDistancing? and 30 <= social-D-percentage and social-D-percentage < 80
-    ask other turtles-here with [ infected? != true and have-vac? != true and isolation? != true ]             ; ask turtles with the variable infected? not true and not in isolation
+    ask other turtles-here with [ color = white and have-vac? != true and isolation? != true ]                 ; ask turtles with the variable infected? not true and not in isolation
     [ if random-float 100 < (infection-chance * 70 ) / 100                                                     ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" but in here the infection chance reduce by 30%
       [ get-infected ] ]]                                                                                      ; the turtles being infected
 end
 
 
-to transmisstion-ST-alban                                                                                           ; this create function transmisstion for turtles of St. ALban (only "circle" can infect "circle") to use when the stayLocal? is on
+to transmission-ST-alban                                                                                       ; this create function transmission for turtles of St. ALban (only "circle" can infect "circle") to use when the stayLocal? is on
  if not vaccine? and not socialDistancing?[                                                                    ; if 2 switch vaccine? and socialDistancing? are off
   ask other turtles-here with [shape = "circle" and color = white and isolation? != true ]                     ; ask other turtles with shape "circle" and have color white (uninfected) and not in isolation
     [ if random-float 100 < (infection-chance * 20) / 100                                                      ; create a random float number in range 0 to 100 if the number < than global variable "infection-chance" (in here the infection-chance is reduce 80%)
@@ -303,7 +303,7 @@ to transmisstion-ST-alban                                                       
 end
 
 
-to transmisstion-welyn-H                                                                                            ; this create function transmisstion for turtles of Welwyn and Hatfield (only "x" can infect "x") to use when the stayLocal? is on
+to transmission-welyn-H                                                                                        ; this create function transmission for turtles of Welwyn and Hatfield (only "x" can infect "x") to use when the stayLocal? is on
 
 if not vaccine? and not socialDistancing?[                                                                     ; if 2 switch vaccine? and socialDistancing? are off
   ask other turtles-here with [shape = "x" and color = white and isolation? != true ]                          ; ask other turtles with shape "x" and have color white (uninfected) and not in isolation
@@ -413,17 +413,12 @@ to calculate-mortality-rate                                                     
 end
 
 
-to calculate-rates                                                                     ; this function is to calculate the infection rate and the number of people recovered from the virus
+to calculate-infection-rate                                                            ; this function is to calculate the infection rate and the number of people recovered from the virus
 
-  ;let new-infected sum [ nb-infected ] of turtles
+
   set recovery-cases  count turtles with [color = black and have-vac? != true]         ; calculate the number recovered by counting the number with coulor black (have antibodies) and without vaccine
   set infect-rate (count turtles with [color = red] / count turtles) * 100             ; # of Infections / Population at Risk X constant (k) = Rate of Infection Constant K is 100 assign value of 100 means the percentage.
                                                                                        ; color red is the infection case
-
-
-
-
-
 
 end
 @#$#@#$#@
@@ -508,7 +503,7 @@ SWITCH
 58
 stayLocal?
 stayLocal?
-1
+0
 1
 -1000
 
@@ -555,7 +550,7 @@ infect
 infect
 0
 1000
-20.0
+5.0
 10
 1
 NIL
@@ -600,7 +595,7 @@ infection-chance
 infection-chance
 0
 100
-0.8
+0.3
 5
 1
 NIL
@@ -630,7 +625,7 @@ chance-recovery
 chance-recovery
 0
 100
-98.0
+95.0
 10
 1
 NIL
@@ -656,7 +651,7 @@ nb_people_vaccinated
 nb_people_vaccinated
 0
 13000
-4500.0
+6803.0
 100
 1
 NIL
@@ -863,7 +858,7 @@ social-D-percentage
 social-D-percentage
 0
 100
-100.0
+80.0
 10
 1
 NIL
@@ -872,39 +867,89 @@ HORIZONTAL
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+Agent-based model base on real-data to explore the potential outcomes of a COVID-19 epidemic with and without vaccination roll out. This module is to gain information about The transmission of the COVID- 19 virus in relation to the changes of Social Distancing, number of Vaccine admitted, Self- Isolation and travel permitted – stay local 
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Agents: 
+-	The agents in the model are individuals who wander around the landscape. Using GIS in Netlogo and download the GIS dataset of the boundaries of St. Albans and Welwyn & Hatfield and create a border between two districts for the travel factor.
+-	There are 4 groups of individuals: The presence of the virus in the population is represented by the colours of individuals. Four colours are used:
+1. White individuals are healthy people.
+2. Red individuals are infected and can die because of Covid. 
+3. Black individuals are turtles with immunity to the virus after recovery or when they have the vaccine. 
+4. Grey individuals are the from the infected turtles (Red turtles), when they infected, they will self – isolation and turn grey.
+-	Using the slider in the model interface to control the number of agents in the initial state of the model.
+Interactions: 
+         Upon encountering an infected person, individuals have a random probability of contracting the illness and can die from it. An infected individual has a chance of recovery after the given recovery time has elapsed. 
+
+-	Using the slider in the model interface to control the number of agents in the initial state of the model.
+-	Parameter set by user using a switch on and off button, both of them will have an effect on the Infection rate and Mortality rate:
+1. Stay Local: When turtles can move between two districts. If it is on means the restriction is put in place. 
+2. Isolation: Once an infected turtle is identified as an "isolator," the turtles will isolate themselves in the current location and indicated by the colour grey and will stay there for 2 weeks according to UK’s GOV rule. 
+3. Had vaccine: Set how many Blacks turtles will appear. They are the people who have the vaccine and now have immunity to the virus.
+4. Social Distancing: When this is on turtles will avoid each other’s, this also decreases the chance of catching the virus.  
+
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+(Constant slider): 
+
+populationofSTA	        7469     ( Population of St. ALbans scaled down to 1:20)
+populationofWandH	6137     ( Population of W and H scaled down to 1:20)
+infect	                5        ( Number of infected turtles scaled down to 1:20)
+infection-chance	0.3      ( Infection chance)
+Immunity-last	        2040     ( How long will immunity last)
+Chance-recovery 	95       ( Chance of recovery) 
+
+This is the setup based on the real data of COVID-19. 
+
+(Can change): 
+
+nb_people_vaccinated	4500     ( Number had been vaccinated and had antibody)
+isolation-percentage	80       ( Isolation tendency)
+social-D-percentage 	80       ( Social Distancing tendency) 
+
+
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+In the event of an outbreak, the number of people being infected over time follows a "S-curve," as it does in many epidemiological models. It is known as an S-curve because it resembles a sideways S. Adjust the parameters' values using the slider to see what kinds of adjustments cause the S curve to expand or shrink.
+
 
 ## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+Try to turn off switch to see if the infection rate and mortality rates increased or not 
+
 
 ## EXTENDING THE MODEL
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+-	It can be an additional reproduction rate when people die with old age and new individuals are born to replace those who die. 
+-	Expand the model to simulate the whole population of UK. 
+-	Change the way the virus spread by adding virus mutation, which can be based on the Kent and South African variants, those that have a high level of transmission.
+
+
 
 ## NETLOGO FEATURES
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+-	Geographic information system (GIS) is applied, including real-world geographic data of two district St. Albans and Welwyn & Hatfield 
+
 
 ## RELATED MODELS
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+None
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+The function create-random is based on AVERAGE-ISOLATION-TENDENCY function from  Yang, C. and Wilensky, U. (2011). NetLogo epiDEM Travel and Control model. http://ccl.northwestern.edu/netlogo/models/epiDEMTravelandControl. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL. 
+
+NetLogo software :
+
+Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+
+See the github website: 
+https://github.com/khoita2210/Netlogo-ABM-of-Covid-19
+
+Dang Khoi Ta | SRN: 17075263
 @#$#@#$#@
 default
 true
